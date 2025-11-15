@@ -32,8 +32,10 @@ app.use('/api/', apiLimiter);
 // Serve only specific static files to avoid exposing server files
 const allowedFiles = {
     'index.html': 'text/html',
+    'buscar.html': 'text/html',
     'styles.css': 'text/css',
-    'script.js': 'application/javascript'
+    'script.js': 'application/javascript',
+    'buscar.js': 'application/javascript'
 };
 
 // Custom static file serving for main site

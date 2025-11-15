@@ -182,7 +182,10 @@ async function loadProperties() {
         const response = await fetch('/api/properties');
         const properties = await response.json();
         
-        if (properties.length === 0) {
+        // Filter out sold properties for main site
+        const availableProperties = properties.filter(p => !p.sold);
+        
+        if (availableProperties.length === 0) {
             propertiesGrid.innerHTML = `
                 <div class="empty-properties">
                     <i class="fas fa-building fa-3x"></i>
@@ -194,20 +197,29 @@ async function loadProperties() {
                 </div>
             `;
         } else {
-            propertiesGrid.innerHTML = properties.map(property => `
-                <div class="property-card">
+            propertiesGrid.innerHTML = availableProperties.map(property => {
+                const images = property.imageUrls || (property.imageUrl ? [property.imageUrl] : []);
+                const firstImage = images.length > 0 ? images[0] : null;
+                const location = property.city ? 
+                    `${property.neighborhood || ''}, ${property.city} - ${property.state}` : 
+                    (property.location || 'Localização não informada');
+                
+                return `
+                <div class="property-card ${property.featured ? 'featured' : ''}">
                     <div class="property-image">
-                        ${property.imageUrl ? 
-                            `<img src="${property.imageUrl}" alt="${property.title}" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image fa-3x\\'></i>'">` : 
+                        ${firstImage ? 
+                            `<img src="${firstImage}" alt="${property.title}" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image fa-3x\\'></i>'">` : 
                             '<i class="fas fa-image fa-3x"></i>'
                         }
+                        ${property.featured ? '<span class="property-badge featured"><i class="fas fa-star"></i> Destaque</span>' : ''}
+                        ${images.length > 1 ? `<span class="property-badge images"><i class="fas fa-images"></i> ${images.length} fotos</span>` : ''}
                     </div>
                     <div class="property-content">
                         <span class="property-type">${property.type || 'Imóvel'}</span>
                         <h3 class="property-title">${property.title}</h3>
                         <div class="property-location">
                             <i class="fas fa-map-marker-alt"></i>
-                            ${property.location}
+                            ${location}
                         </div>
                         <div class="property-price">
                             R$ ${formatPropertyPrice(property.price)}
@@ -220,7 +232,7 @@ async function loadProperties() {
                         </a>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
     } catch (error) {
         console.error('Error loading properties:', error);
