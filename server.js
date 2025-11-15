@@ -16,6 +16,13 @@ const apiLimiter = rateLimit({
     message: 'Too many requests from this IP, please try again later.'
 });
 
+// Rate limiting for static files
+const staticLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 500, // More generous limit for static files
+    message: 'Too many requests, please try again later.'
+});
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
@@ -29,7 +36,7 @@ const allowedFiles = {
 };
 
 // Custom static file serving for main site
-app.get('/:file', (req, res, next) => {
+app.get('/:file', staticLimiter, (req, res, next) => {
     const fileName = req.params.file;
     if (allowedFiles[fileName]) {
         const filePath = path.join(__dirname, fileName);
