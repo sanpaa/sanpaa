@@ -3,27 +3,48 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'properties.json');
 
+// Rate limiting for API endpoints
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.'
+});
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use('/api/', apiLimiter);
 
-// Serve static files from root directory
-app.use(express.static(__dirname, {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript');
-        } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css');
-        }
+// Serve only specific static files to avoid exposing server files
+const allowedFiles = {
+    'index.html': 'text/html',
+    'styles.css': 'text/css',
+    'script.js': 'application/javascript'
+};
+
+// Custom static file serving for main site
+app.get('/:file', (req, res, next) => {
+    const fileName = req.params.file;
+    if (allowedFiles[fileName]) {
+        const filePath = path.join(__dirname, fileName);
+        res.setHeader('Content-Type', allowedFiles[fileName]);
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                next();
+            }
+        });
+    } else {
+        next();
     }
-}));
+});
 
-// Serve admin panel
+// Serve admin panel with restricted access
 app.use('/admin', express.static(path.join(__dirname, 'admin'), {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
