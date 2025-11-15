@@ -159,7 +159,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.target.value = value;
         });
     }
-    });
     
     // Handle image file uploads
     const imageFilesInput = document.getElementById('imageFiles');
