@@ -3,6 +3,9 @@ let allProperties = [];
 let filteredProperties = [];
 let currentPage = 1;
 const propertiesPerPage = 9;
+let map = null;
+let markers = [];
+let currentView = 'grid';
 
 // Load properties on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -315,4 +318,130 @@ function showError() {
             </button>
         </div>
     `;
+}
+
+// Switch between grid and map view
+function switchView(view) {
+    currentView = view;
+    const gridView = document.getElementById('resultsGrid');
+    const mapView = document.getElementById('map');
+    const gridBtn = document.getElementById('gridViewBtn');
+    const mapBtn = document.getElementById('mapViewBtn');
+    const pagination = document.getElementById('pagination');
+    
+    if (view === 'map') {
+        gridView.style.display = 'none';
+        mapView.classList.add('active');
+        pagination.style.display = 'none';
+        gridBtn.classList.remove('active');
+        mapBtn.classList.add('active');
+        
+        // Initialize or update map
+        if (!map) {
+            initMap();
+        } else {
+            updateMapMarkers();
+        }
+    } else {
+        gridView.style.display = 'grid';
+        mapView.classList.remove('active');
+        pagination.style.display = 'flex';
+        gridBtn.classList.add('active');
+        mapBtn.classList.remove('active');
+    }
+}
+
+// Initialize map
+function initMap() {
+    // Default center (São Paulo)
+    const defaultLat = -23.550520;
+    const defaultLng = -46.633308;
+    
+    map = L.map('map').setView([defaultLat, defaultLng], 12);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    updateMapMarkers();
+}
+
+// Update map markers
+function updateMapMarkers() {
+    if (!map) return;
+    
+    // Clear existing markers
+    markers.forEach(marker => marker.remove());
+    markers = [];
+    
+    // Add markers for filtered properties with valid coordinates
+    const validProperties = filteredProperties.filter(p => p.latitude && p.longitude);
+    
+    if (validProperties.length === 0) {
+        // Center on default location
+        map.setView([-23.550520, -46.633308], 12);
+        return;
+    }
+    
+    const bounds = [];
+    
+    validProperties.forEach(property => {
+        const lat = parseFloat(property.latitude);
+        const lng = parseFloat(property.longitude);
+        
+        if (isNaN(lat) || isNaN(lng)) return;
+        
+        bounds.push([lat, lng]);
+        
+        // Create custom icon for featured properties
+        const icon = property.featured ? 
+            L.divIcon({
+                html: '<i class="fas fa-star" style="color: #FFD700; font-size: 24px;"></i>',
+                className: 'custom-marker',
+                iconSize: [30, 30]
+            }) :
+            L.icon({
+                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34]
+            });
+        
+        const images = property.imageUrls || (property.imageUrl ? [property.imageUrl] : []);
+        const firstImage = images.length > 0 ? images[0] : null;
+        const location = property.city ? 
+            `${property.neighborhood || ''}, ${property.city} - ${property.state}` : 
+            (property.location || '');
+        
+        // Create marker
+        const marker = L.marker([lat, lng], { icon }).addTo(map);
+        
+        // Create popup content
+        const popupContent = `
+            <div class="map-popup">
+                ${firstImage ? `<img src="${firstImage}" alt="${property.title}" onerror="this.style.display='none'">` : ''}
+                <h3>${property.title}</h3>
+                <div class="popup-location"><i class="fas fa-map-marker-alt"></i> ${location}</div>
+                <div class="popup-price">R$ ${formatPrice(property.price)}</div>
+                <div class="popup-details">
+                    ${property.bedrooms ? `<i class="fas fa-bed"></i> ${property.bedrooms} quartos | ` : ''}
+                    ${property.area ? `<i class="fas fa-ruler-combined"></i> ${property.area}m²` : ''}
+                </div>
+                <a href="https://wa.me/${property.contact.replace(/\D/g, '')}?text=Olá, tenho interesse no imóvel: ${encodeURIComponent(property.title)}" 
+                   class="btn btn-primary btn-sm btn-block" target="_blank" style="text-decoration: none; display: block; text-align: center;">
+                    <i class="fab fa-whatsapp"></i> Tenho Interesse
+                </a>
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent);
+        markers.push(marker);
+    });
+    
+    // Fit map to show all markers
+    if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [50, 50] });
+    }
 }

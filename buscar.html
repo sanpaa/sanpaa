@@ -11,6 +11,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         .search-hero {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
@@ -187,6 +189,85 @@
             color: var(--white);
         }
 
+        /* Map Styles */
+        .view-toggle {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--white);
+            padding: 0.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .view-toggle button {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--gray);
+            background: var(--white);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .view-toggle button.active {
+            background: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        #map {
+            width: 100%;
+            height: 600px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+
+        #map.active {
+            display: block;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 10px;
+        }
+
+        .map-popup {
+            min-width: 250px;
+        }
+
+        .map-popup h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--dark-gray);
+            font-size: 1.1rem;
+        }
+
+        .map-popup .popup-price {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+
+        .map-popup .popup-location {
+            font-size: 0.85rem;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .map-popup .popup-details {
+            font-size: 0.85rem;
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .map-popup img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
         @media (max-width: 768px) {
             .search-hero h1 {
                 font-size: 2rem;
@@ -314,13 +395,26 @@
         <!-- Results Header -->
         <div class="results-header">
             <div class="results-count" id="resultsCount">Carregando imóveis...</div>
-            <select class="sort-select" id="sortSelect" onchange="sortProperties()">
-                <option value="featured">Destaques primeiro</option>
-                <option value="price-asc">Menor preço</option>
-                <option value="price-desc">Maior preço</option>
-                <option value="newest">Mais recentes</option>
-            </select>
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <div class="view-toggle">
+                    <button id="gridViewBtn" class="active" onclick="switchView('grid')">
+                        <i class="fas fa-th"></i> Grade
+                    </button>
+                    <button id="mapViewBtn" onclick="switchView('map')">
+                        <i class="fas fa-map"></i> Mapa
+                    </button>
+                </div>
+                <select class="sort-select" id="sortSelect" onchange="sortProperties()">
+                    <option value="featured">Destaques primeiro</option>
+                    <option value="price-asc">Menor preço</option>
+                    <option value="price-desc">Maior preço</option>
+                    <option value="newest">Mais recentes</option>
+                </select>
+            </div>
         </div>
+
+        <!-- Map View -->
+        <div id="map"></div>
 
         <!-- Results Grid -->
         <div id="resultsGrid" class="properties-grid"></div>
