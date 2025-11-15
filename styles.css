@@ -241,6 +241,18 @@ section {
     gap: 2rem;
 }
 
+.services-grid-two {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .services-grid-two {
+        grid-template-columns: 1fr;
+    }
+}
+
 .service-card {
     background: white;
     padding: 2rem;

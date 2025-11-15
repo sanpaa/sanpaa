@@ -1,7 +1,7 @@
 {
   "name": "alancarmocorretor",
   "version": "1.0.0",
-  "description": "Website profissional para corretora Alancarmo - Seguros, Imóveis e Financiamentos",
+  "description": "Website profissional para corretora Alancarmo - Compra e Venda de Imóveis",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,9 +10,10 @@
   },
   "keywords": [
     "corretor",
-    "seguros",
     "imoveis",
-    "financiamentos"
+    "compra",
+    "venda",
+    "real estate"
   ],
   "author": "Alancarmo Corretor",
   "license": "ISC",
@@ -23,6 +24,7 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "openai": "^4.73.0"
   }
 }

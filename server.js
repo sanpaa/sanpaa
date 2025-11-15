@@ -166,6 +166,73 @@ app.post('/api/upload', upload.array('images', 10), (req, res) => {
     }
 });
 
+// AI Suggestions endpoint  
+app.post('/api/ai/suggest', apiLimiter, async (req, res) => {
+    try {
+        const { type, bedrooms, bathrooms, area, city, neighborhood } = req.body;
+        
+        // Check if OpenAI is configured
+        const hasOpenAI = process.env.OPENAI_API_KEY;
+        
+        if (!hasOpenAI) {
+            // Provide template-based suggestions if no API key
+            const templates = {
+                title: `${type || 'Imóvel'} ${bedrooms ? `com ${bedrooms} quartos` : ''} ${neighborhood ? `em ${neighborhood}` : city || ''}`.trim(),
+                description: `Excelente ${type || 'imóvel'} ${area ? `com ${area}m²` : ''}, ${bedrooms ? `${bedrooms} quartos` : ''}, ${bathrooms ? `${bathrooms} banheiros` : ''}. Localização privilegiada ${neighborhood ? `no bairro ${neighborhood}` : city ? `em ${city}` : ''}. Ótima oportunidade!`,
+                priceHint: area ? `R$ ${(area * 3500).toLocaleString('pt-BR')}` : 'Consulte-nos para uma avaliação precisa'
+            };
+            return res.json(templates);
+        }
+        
+        // Use OpenAI for intelligent suggestions
+        const OpenAI = require('openai');
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        
+        const prompt = `Você é um especialista em marketing imobiliário no Brasil. Com base nos dados abaixo, crie uma sugestão profissional para anúncio de imóvel:
+
+Tipo: ${type || 'não informado'}
+Quartos: ${bedrooms || 'não informado'}
+Banheiros: ${bathrooms || 'não informado'}
+Área: ${area || 'não informado'}m²
+Cidade: ${city || 'não informado'}
+Bairro: ${neighborhood || 'não informado'}
+
+Retorne APENAS um objeto JSON válido com:
+- title: título atrativo do anúncio (max 80 caracteres)
+- description: descrição profissional destacando pontos fortes (max 300 caracteres)
+- priceHint: estimativa de preço baseada no mercado brasileiro (formato: "R$ X.XXX.XXX")
+
+Não adicione comentários, apenas o JSON puro.`;
+
+        const completion = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.7,
+            max_tokens: 300
+        });
+        
+        const response = completion.choices[0].message.content;
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        
+        if (jsonMatch) {
+            const suggestions = JSON.parse(jsonMatch[0]);
+            res.json(suggestions);
+        } else {
+            throw new Error('Invalid AI response');
+        }
+        
+    } catch (error) {
+        console.error('AI suggestion error:', error);
+        // Fallback to template
+        const { type, bedrooms, area, city, neighborhood } = req.body;
+        res.json({
+            title: `${type || 'Imóvel'} ${bedrooms ? `${bedrooms} quartos` : ''} ${neighborhood || city || ''}`.trim(),
+            description: `Excelente ${type || 'imóvel'} ${area ? `com ${area}m²` : ''}. Ótima oportunidade em ${neighborhood || city || 'localização privilegiada'}!`,
+            priceHint: area ? `R$ ${(area * 3500).toLocaleString('pt-BR')}` : 'Consulte para avaliação'
+        });
+    }
+});
+
 // CEP Lookup endpoint
 app.get('/api/cep/:cep', async (req, res) => {
     try {

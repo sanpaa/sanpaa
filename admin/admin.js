@@ -160,6 +160,65 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
+    // AI Suggestion functionality
+    const btnAiSuggest = document.getElementById('btnAiSuggest');
+    if (btnAiSuggest) {
+        btnAiSuggest.addEventListener('click', async () => {
+            // Get current form values
+            const type = document.getElementById('type').value;
+            const bedrooms = document.getElementById('bedrooms').value;
+            const bathrooms = document.getElementById('bathrooms').value;
+            const area = document.getElementById('area').value.replace(/\D/g, '').replace(',', '.');
+            const city = document.getElementById('city').value;
+            const neighborhood = document.getElementById('neighborhood').value;
+            
+            if (!type || !area) {
+                alert('Preencha pelo menos o Tipo e a Área para obter sugestões da IA');
+                return;
+            }
+            
+            btnAiSuggest.disabled = true;
+            btnAiSuggest.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando sugestões...';
+            
+            try {
+                const response = await fetch('/api/ai/suggest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, bedrooms, bathrooms, area, city, neighborhood })
+                });
+                
+                if (!response.ok) throw new Error('Erro ao obter sugestões');
+                
+                const suggestions = await response.json();
+                
+                // Show suggestions in a nice modal/alert
+                const apply = confirm(
+                    `✨ Sugestões da IA:\n\n` +
+                    `Título Sugerido:\n${suggestions.title}\n\n` +
+                    `Descrição Sugerida:\n${suggestions.description}\n\n` +
+                    `Estimativa de Preço:\n${suggestions.priceHint}\n\n` +
+                    `Deseja aplicar essas sugestões ao formulário?`
+                );
+                
+                if (apply) {
+                    document.getElementById('title').value = suggestions.title;
+                    document.getElementById('description').value = suggestions.description;
+                    // Don't override price if user already has one
+                    if (!document.getElementById('price').value) {
+                        document.getElementById('price').value = suggestions.priceHint.replace('R$ ', '');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('AI suggestion error:', error);
+                alert('Não foi possível obter sugestões da IA. Tente novamente.');
+            } finally {
+                btnAiSuggest.disabled = false;
+                btnAiSuggest.innerHTML = '<i class="fas fa-magic"></i> Sugestões com IA';
+            }
+        });
+    }
+    
     // Handle image file uploads
     const imageFilesInput = document.getElementById('imageFiles');
     const imagePreview = document.getElementById('imagePreview');

@@ -108,6 +108,31 @@
             color: var(--dark-gray);
         }
 
+        .btn-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-ai:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-ai:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .btn-sm {
             padding: 0.5rem 1rem;
             font-size: 0.85rem;
@@ -512,6 +537,15 @@
                     <div class="form-group">
                         <label for="description">Descrição</label>
                         <textarea id="description" placeholder="Descreva os detalhes do imóvel..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="button" class="btn-ai" id="btnAiSuggest">
+                            <i class="fas fa-magic"></i> Sugestões com IA
+                        </button>
+                        <small style="color: var(--text-color); margin-top: 0.5rem; display: block;">
+                            Preencha os campos básicos acima e clique para obter sugestões inteligentes
+                        </small>
                     </div>
 
                     <div class="form-group">
