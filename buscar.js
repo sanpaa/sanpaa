@@ -388,12 +388,19 @@ function updateMapMarkers() {
     const validProperties = filteredProperties.filter(p => p.latitude && p.longitude);
     
     if (validProperties.length === 0) {
-        // Center on default location
+        // Center on default location (São Paulo)
         map.setView([-23.550520, -46.633308], 12);
         return;
     }
     
     const bounds = [];
+    
+    // Create marker cluster group for better performance
+    const markerCluster = L.markerClusterGroup({
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false
+    });
     
     validProperties.forEach(property => {
         const lat = parseFloat(property.latitude);
@@ -406,15 +413,19 @@ function updateMapMarkers() {
         // Create custom icon for featured properties
         const icon = property.featured ? 
             L.divIcon({
-                html: '<i class="fas fa-star" style="color: #FFD700; font-size: 24px;"></i>',
-                className: 'custom-marker',
-                iconSize: [30, 30]
+                html: '<div style="background: #FFD700; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="fas fa-star" style="color: white; font-size: 16px;"></i></div>',
+                className: '',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15],
+                popupAnchor: [0, -15]
             }) :
             L.icon({
                 iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
                 iconSize: [25, 41],
                 iconAnchor: [12, 41],
-                popupAnchor: [1, -34]
+                popupAnchor: [1, -34],
+                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                shadowSize: [41, 41]
             });
         
         const images = property.imageUrls || (property.imageUrl ? [property.imageUrl] : []);
@@ -424,29 +435,42 @@ function updateMapMarkers() {
             (property.location || '');
         
         // Create marker
-        const marker = L.marker([lat, lng], { icon }).addTo(map);
+        const marker = L.marker([lat, lng], { icon });
         
-        // Create popup content
+        // Create popup content with better styling
         const popupContent = `
-            <div class="map-popup">
-                ${firstImage ? `<img src="${firstImage}" alt="${property.title}" onerror="this.style.display='none'">` : ''}
-                <h3>${property.title}</h3>
-                <div class="popup-location"><i class="fas fa-map-marker-alt"></i> ${location}</div>
-                <div class="popup-price">R$ ${formatPrice(property.price)}</div>
-                <div class="popup-details">
+            <div class="map-popup" style="min-width: 250px;">
+                ${firstImage ? `<img src="${firstImage}" alt="${property.title}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;" onerror="this.style.display='none'">` : ''}
+                <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #333;">${property.title}</h3>
+                <div style="color: #666; font-size: 14px; margin-bottom: 10px;">
+                    <i class="fas fa-map-marker-alt" style="color: #004AAD;"></i> ${location}
+                </div>
+                <div style="font-size: 18px; font-weight: bold; color: #004AAD; margin-bottom: 10px;">
+                    R$ ${formatPrice(property.price)}
+                </div>
+                <div style="color: #666; font-size: 14px; margin-bottom: 15px;">
                     ${property.bedrooms ? `<i class="fas fa-bed"></i> ${property.bedrooms} quartos | ` : ''}
                     ${property.area ? `<i class="fas fa-ruler-combined"></i> ${property.area}m²` : ''}
                 </div>
                 <a href="https://wa.me/${property.contact.replace(/\D/g, '')}?text=Olá, tenho interesse no imóvel: ${encodeURIComponent(property.title)}" 
-                   class="btn btn-primary btn-sm btn-block" target="_blank" style="text-decoration: none; display: block; text-align: center;">
+                   class="btn btn-primary" target="_blank" 
+                   style="display: inline-block; background: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-size: 14px; width: 100%; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
                     <i class="fab fa-whatsapp"></i> Tenho Interesse
                 </a>
             </div>
         `;
         
-        marker.bindPopup(popupContent);
+        marker.bindPopup(popupContent, {
+            maxWidth: 300,
+            className: 'custom-popup'
+        });
+        
+        markerCluster.addLayer(marker);
         markers.push(marker);
     });
+    
+    // Add cluster group to map
+    map.addLayer(markerCluster);
     
     // Fit map to show all markers
     if (bounds.length > 0) {

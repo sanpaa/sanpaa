@@ -245,8 +245,8 @@ function createPropertyCard(property) {
                 width="100%"
                 height="250"
                 frameborder="0"
-                style="border:0; border-radius: 8px;"
-                src="https://www.google.com/maps?q=${property.latitude},${property.longitude}&z=15&output=embed"
+                style="border:0; border-radius: 8px; margin-top: 15px;"
+                src="https://maps.google.com/maps?q=${property.latitude},${property.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed"
                 allowfullscreen>
             </iframe>
         </div>
