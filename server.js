@@ -2,14 +2,51 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs').promises;
+const fssync = require('fs');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const axios = require('axios');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'properties.json');
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+
+// Create uploads directory if it doesn't exist
+if (!fssync.existsSync(UPLOADS_DIR)) {
+    fssync.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, UPLOADS_DIR);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|gif|webp/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowedTypes.test(file.mimetype);
+        
+        if (extname && mimetype) {
+            return cb(null, true);
+        } else {
+            cb(new Error('Apenas imagens são permitidas (jpeg, jpg, png, gif, webp)'));
+        }
+    }
+});
 
 // Simple admin credentials (in production, use database)
 const ADMIN_USER = 'admin';
@@ -110,6 +147,24 @@ async function writeProperties(properties) {
 }
 
 // API Routes
+
+// Serve uploaded images
+app.use('/uploads', express.static(UPLOADS_DIR));
+
+// Image upload endpoint
+app.post('/api/upload', upload.array('images', 10), (req, res) => {
+    try {
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ error: 'Nenhuma imagem foi enviada' });
+        }
+        
+        const imageUrls = req.files.map(file => `/uploads/${file.filename}`);
+        res.json({ imageUrls });
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ error: 'Erro ao fazer upload das imagens' });
+    }
+});
 
 // CEP Lookup endpoint
 app.get('/api/cep/:cep', async (req, res) => {

@@ -628,6 +628,16 @@ section {
     overflow: hidden;
 }
 
+.property-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.property-actions .btn {
+    flex-shrink: 0;
+}
+
 .loading-state,
 .empty-properties {
     text-align: center;

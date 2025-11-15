@@ -119,6 +119,84 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         e.target.value = value;
     });
+    
+    // Format phone number as user types
+    document.getElementById('contact').addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length <= 11) {
+            if (value.length > 6) {
+                value = value.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+            } else if (value.length > 2) {
+                value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+            } else if (value.length > 0) {
+                value = value.replace(/^(\d*)/, '($1');
+            }
+        }
+        e.target.value = value.slice(0, 15); // Limit to formatted length
+    });
+    
+    // Format price as currency (Brazilian Real)
+    document.getElementById('price').addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value) {
+            // Convert to number and format
+            value = (parseInt(value) / 100).toFixed(2);
+            value = value.replace('.', ',');
+            value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+        e.target.value = value;
+    });
+    
+    // Format area input
+    const areaInput = document.getElementById('area');
+    if (areaInput) {
+        areaInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value) {
+                value = (parseInt(value) / 100).toFixed(2);
+                value = value.replace('.', ',');
+            }
+            e.target.value = value;
+        });
+    }
+    });
+    
+    // Handle image file uploads
+    const imageFilesInput = document.getElementById('imageFiles');
+    const imagePreview = document.getElementById('imagePreview');
+    let uploadedImages = [];
+    
+    imageFilesInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        imagePreview.innerHTML = '';
+        
+        files.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const imgContainer = document.createElement('div');
+                imgContainer.style.position = 'relative';
+                imgContainer.innerHTML = `
+                    <img src="${event.target.result}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 5px;">
+                    <button type="button" onclick="removeImage(${index})" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer;">×</button>
+                `;
+                imagePreview.appendChild(imgContainer);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+    
+    // Global function to remove image
+    window.removeImage = (index) => {
+        const dt = new DataTransfer();
+        const files = imageFilesInput.files;
+        
+        for (let i = 0; i < files.length; i++) {
+            if (i !== index) dt.items.add(files[i]);
+        }
+        
+        imageFilesInput.files = dt.files;
+        imageFilesInput.dispatchEvent(new Event('change'));
+    };
 });
 
 // Handle CEP lookup
@@ -321,15 +399,58 @@ function closeModal() {
 async function handleFormSubmit(e) {
     e.preventDefault();
 
+    // Handle image uploads first
+    let uploadedImageUrls = [];
+    const imageFiles = document.getElementById('imageFiles').files;
+    
+    if (imageFiles.length > 0) {
+        const formData = new FormData();
+        for (let i = 0; i < imageFiles.length; i++) {
+            formData.append('images', imageFiles[i]);
+        }
+        
+        try {
+            const uploadResponse = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (uploadResponse.ok) {
+                const uploadResult = await uploadResponse.json();
+                uploadedImageUrls = uploadResult.imageUrls.map(url => window.location.origin + url);
+            } else {
+                alert('Erro ao fazer upload das imagens. Continuando com URLs fornecidas.');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Erro ao fazer upload das imagens. Continuando com URLs fornecidas.');
+        }
+    }
+
     // Parse image URLs from textarea
     const imageUrlsText = document.getElementById('imageUrls').value.trim();
-    const imageUrls = imageUrlsText ? imageUrlsText.split('\n').filter(url => url.trim()).map(url => url.trim()) : [];
+    const textImageUrls = imageUrlsText ? imageUrlsText.split('\n').filter(url => url.trim()).map(url => url.trim()) : [];
+    
+    // Combine uploaded images and text URLs
+    const imageUrls = [...uploadedImageUrls, ...textImageUrls];
+
+    // Parse price (remove formatting)
+    const priceValue = document.getElementById('price').value;
+    const price = parseFloat(priceValue.replace(/\./g, '').replace(',', '.')) || 0;
+    
+    // Parse area (remove formatting)
+    const areaValue = document.getElementById('area').value;
+    const area = parseFloat(areaValue.replace(/\./g, '').replace(',', '.')) || 0;
+    
+    // Parse contact (remove formatting)
+    const contactValue = document.getElementById('contact').value;
+    const contact = contactValue.replace(/\D/g, '');
 
     const propertyData = {
         type: document.getElementById('type').value,
         title: document.getElementById('title').value,
         description: document.getElementById('description').value,
-        price: parseFloat(document.getElementById('price').value),
+        price: price,
         cep: document.getElementById('cep').value,
         street: document.getElementById('street').value,
         neighborhood: document.getElementById('neighborhood').value,
@@ -339,13 +460,13 @@ async function handleFormSubmit(e) {
         longitude: document.getElementById('longitude').value,
         bedrooms: parseInt(document.getElementById('bedrooms').value) || 0,
         bathrooms: parseInt(document.getElementById('bathrooms').value) || 0,
-        area: parseFloat(document.getElementById('area').value) || 0,
+        area: area,
         parking: parseInt(document.getElementById('parking').value) || 0,
         imageUrls: imageUrls,
         imageUrl: imageUrls.length > 0 ? imageUrls[0] : '', // Keep backward compatibility
         featured: document.getElementById('featured').checked,
         sold: document.getElementById('sold').checked,
-        contact: document.getElementById('contact').value
+        contact: contact
     };
 
     try {

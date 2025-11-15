@@ -226,10 +226,18 @@ async function loadProperties() {
                         </div>
                         ${renderPropertyDetails(property)}
                         ${property.description ? `<p class="property-description">${property.description}</p>` : ''}
-                        <a href="https://wa.me/${property.contact.replace(/\D/g, '')}?text=Olá, tenho interesse no imóvel: ${encodeURIComponent(property.title)}" 
-                           class="btn btn-primary btn-block" target="_blank">
-                            <i class="fab fa-whatsapp"></i> Tenho Interesse
-                        </a>
+                        <div class="property-actions">
+                            <a href="https://wa.me/${property.contact.replace(/\D/g, '')}?text=Olá, tenho interesse no imóvel: ${encodeURIComponent(property.title)}" 
+                               class="btn btn-primary" target="_blank" style="flex: 1;">
+                                <i class="fab fa-whatsapp"></i> Tenho Interesse
+                            </a>
+                            ${property.latitude && property.longitude ? `
+                            <a href="https://www.google.com/maps?q=${property.latitude},${property.longitude}" 
+                               class="btn btn-secondary" target="_blank" title="Ver no Google Maps">
+                                <i class="fas fa-map-marked-alt"></i> Ver no Maps
+                            </a>
+                            ` : ''}
+                        </div>
                     </div>
                 </div>
             `}).join('');
