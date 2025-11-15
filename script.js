@@ -174,8 +174,98 @@ function highlightNavigation() {
 
 window.addEventListener('scroll', highlightNavigation);
 
+// Load and display properties
+async function loadProperties() {
+    const propertiesGrid = document.getElementById('propertiesGrid');
+    
+    try {
+        const response = await fetch('/api/properties');
+        const properties = await response.json();
+        
+        if (properties.length === 0) {
+            propertiesGrid.innerHTML = `
+                <div class="empty-properties">
+                    <i class="fas fa-building fa-3x"></i>
+                    <h3>Em breve novos imóveis</h3>
+                    <p>Estamos preparando imóveis incríveis para você. Entre em contato para mais informações!</p>
+                    <a href="https://wa.me/5511999999999?text=Olá, gostaria de informações sobre imóveis" class="btn btn-primary" target="_blank">
+                        <i class="fab fa-whatsapp"></i> Falar com Corretor
+                    </a>
+                </div>
+            `;
+        } else {
+            propertiesGrid.innerHTML = properties.map(property => `
+                <div class="property-card">
+                    <div class="property-image">
+                        ${property.imageUrl ? 
+                            `<img src="${property.imageUrl}" alt="${property.title}" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image fa-3x\\'></i>'">` : 
+                            '<i class="fas fa-image fa-3x"></i>'
+                        }
+                    </div>
+                    <div class="property-content">
+                        <span class="property-type">${property.type || 'Imóvel'}</span>
+                        <h3 class="property-title">${property.title}</h3>
+                        <div class="property-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${property.location}
+                        </div>
+                        <div class="property-price">
+                            R$ ${formatPropertyPrice(property.price)}
+                        </div>
+                        ${renderPropertyDetails(property)}
+                        ${property.description ? `<p class="property-description">${property.description}</p>` : ''}
+                        <a href="https://wa.me/${property.contact.replace(/\D/g, '')}?text=Olá, tenho interesse no imóvel: ${encodeURIComponent(property.title)}" 
+                           class="btn btn-primary btn-block" target="_blank">
+                            <i class="fab fa-whatsapp"></i> Tenho Interesse
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading properties:', error);
+        propertiesGrid.innerHTML = `
+            <div class="empty-properties">
+                <i class="fas fa-exclamation-triangle fa-3x"></i>
+                <h3>Não foi possível carregar os imóveis</h3>
+                <p>Entre em contato para conhecer nossos imóveis disponíveis!</p>
+                <a href="https://wa.me/5511999999999?text=Olá, gostaria de informações sobre imóveis" class="btn btn-primary" target="_blank">
+                    <i class="fab fa-whatsapp"></i> Falar com Corretor
+                </a>
+            </div>
+        `;
+    }
+}
+
+function renderPropertyDetails(property) {
+    const details = [];
+    
+    if (property.bedrooms) {
+        details.push(`<span class="property-detail"><i class="fas fa-bed"></i> ${property.bedrooms} quartos</span>`);
+    }
+    if (property.bathrooms) {
+        details.push(`<span class="property-detail"><i class="fas fa-bath"></i> ${property.bathrooms} banheiros</span>`);
+    }
+    if (property.area) {
+        details.push(`<span class="property-detail"><i class="fas fa-ruler-combined"></i> ${property.area}m²</span>`);
+    }
+    if (property.parking) {
+        details.push(`<span class="property-detail"><i class="fas fa-car"></i> ${property.parking} vagas</span>`);
+    }
+
+    return details.length > 0 ? `<div class="property-details">${details.join('')}</div>` : '';
+}
+
+function formatPropertyPrice(price) {
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(price);
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     showTestimonial(currentTestimonial);
     highlightNavigation();
+    loadProperties();
 });

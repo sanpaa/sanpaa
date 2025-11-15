@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - Alancarmo Corretor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #004AAD;
+            --secondary-color: #0066CC;
+            --white: #FFFFFF;
+            --light-gray: #F5F5F5;
+            --gray: #E0E0E0;
+            --dark-gray: #333333;
+            --text-color: #4A4A4A;
+            --success-color: #28A745;
+            --danger-color: #DC3545;
+            --warning-color: #FFC107;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--light-gray);
+            color: var(--text-color);
+        }
+
+        .header {
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 1.5rem 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: var(--white);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: var(--white);
+        }
+
+        .btn-secondary {
+            background: var(--gray);
+            color: var(--dark-gray);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .property-card {
+            background: var(--white);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .property-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .property-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: var(--gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+        }
+
+        .property-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .property-content {
+            padding: 1.5rem;
+        }
+
+        .property-type {
+            display: inline-block;
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .property-title {
+            font-size: 1.2rem;
+            color: var(--dark-gray);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .property-location {
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .property-price {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .property-details {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .property-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.85rem;
+            color: var(--text-color);
+        }
+
+        .property-actions {
+            display: flex;
+            gap: 0.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 10px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: var(--primary-color);
+            color: var(--white);
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--dark-gray);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--gray);
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: var(--dark-gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .properties-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1><i class="fas fa-cog"></i> Painel Administrativo</h1>
+        <p>Gerencie os imóveis do Alancarmo Corretor</p>
+    </header>
+
+    <div class="container">
+        <div class="actions">
+            <h2>Imóveis Cadastrados</h2>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="/" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Ver Site
+                </a>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <i class="fas fa-plus"></i> Adicionar Imóvel
+                </button>
+            </div>
+        </div>
+
+        <div id="propertiesContainer" class="properties-grid"></div>
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-building"></i>
+            <h3>Nenhum imóvel cadastrado</h3>
+            <p>Comece adicionando seu primeiro imóvel para exibir no site</p>
+            <button class="btn btn-primary" onclick="openAddModal()">
+                <i class="fas fa-plus"></i> Adicionar Primeiro Imóvel
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="propertyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Adicionar Imóvel</h2>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="propertyForm">
+                    <input type="hidden" id="propertyId">
+                    
+                    <div class="form-group">
+                        <label for="type">Tipo de Imóvel *</label>
+                        <select id="type" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="Casa">Casa</option>
+                            <option value="Apartamento">Apartamento</option>
+                            <option value="Terreno">Terreno</option>
+                            <option value="Comercial">Comercial</option>
+                            <option value="Rural">Rural</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">Título *</label>
+                        <input type="text" id="title" placeholder="Ex: Casa com 3 quartos no centro" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Descrição</label>
+                        <textarea id="description" placeholder="Descreva os detalhes do imóvel..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="price">Preço (R$) *</label>
+                        <input type="number" id="price" placeholder="250000" step="0.01" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location">Localização *</label>
+                        <input type="text" id="location" placeholder="Ex: Centro, São Paulo - SP" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bedrooms">Quartos</label>
+                            <input type="number" id="bedrooms" placeholder="3" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="bathrooms">Banheiros</label>
+                            <input type="number" id="bathrooms" placeholder="2" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="area">Área (m²)</label>
+                            <input type="number" id="area" placeholder="120" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="parking">Vagas</label>
+                            <input type="number" id="parking" placeholder="2" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="imageUrl">URL da Imagem</label>
+                        <input type="url" id="imageUrl" placeholder="https://exemplo.com/imagem.jpg">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact">Contato *</label>
+                        <input type="text" id="contact" placeholder="(11) 99999-9999" required>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="submit" class="btn btn-success" style="flex: 1;">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
