@@ -176,12 +176,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Only need title OR description - AI will analyze text!
             if (!title && !description) {
-                alert('Digite pelo menos um título ou descrição para a IA gerar sugestões inteligentes');
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Dados insuficientes',
+                    text: 'Digite pelo menos um título ou descrição para a IA gerar sugestões inteligentes',
+                    confirmButtonColor: '#004AAD'
+                });
                 return;
             }
             
             btnAiSuggest.disabled = true;
-            btnAiSuggest.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
+            btnAiSuggest.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando com IA...';
             
             try {
                 const response = await fetch('/api/ai/suggest', {
@@ -194,32 +199,67 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 const suggestions = await response.json();
                 
-                // Build suggestion message
-                let message = `✨ Sugestões da IA:\n\n`;
-                if (suggestions.title) message += `Título:\n${suggestions.title}\n\n`;
-                if (suggestions.description) message += `Descrição:\n${suggestions.description}\n\n`;
-                if (suggestions.bedrooms) message += `Quartos: ${suggestions.bedrooms}\n`;
-                if (suggestions.bathrooms) message += `Banheiros: ${suggestions.bathrooms}\n`;
-                if (suggestions.area) message += `Área: ${suggestions.area}m²\n`;
-                if (suggestions.priceHint) message += `\nPreço Estimado:\n${suggestions.priceHint}\n`;
-                message += `\nDeseja aplicar ao formulário?`;
+                // Build beautiful HTML for suggestions
+                let htmlContent = '<div style="text-align: left; padding: 10px;">';
+                if (suggestions.title) htmlContent += `<p style="margin-bottom: 15px;"><strong>📝 Título:</strong><br><span style="color: #666;">${suggestions.title}</span></p>`;
+                if (suggestions.description) htmlContent += `<p style="margin-bottom: 15px;"><strong>📋 Descrição:</strong><br><span style="color: #666; font-size: 0.9em;">${suggestions.description}</span></p>`;
                 
-                const apply = confirm(message);
+                let detailsHtml = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">';
+                if (suggestions.bedrooms) detailsHtml += `<p><strong>🛏️ Quartos:</strong> ${suggestions.bedrooms}</p>`;
+                if (suggestions.bathrooms) detailsHtml += `<p><strong>🚿 Banheiros:</strong> ${suggestions.bathrooms}</p>`;
+                if (suggestions.area) detailsHtml += `<p><strong>📏 Área:</strong> ${suggestions.area}m²</p>`;
+                if (suggestions.parking) detailsHtml += `<p><strong>🚗 Vagas:</strong> ${suggestions.parking}</p>`;
+                detailsHtml += '</div>';
+                htmlContent += detailsHtml;
                 
-                if (apply) {
+                if (suggestions.priceHint) htmlContent += `<p style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 5px;"><strong>💰 Preço Estimado:</strong><br><span style="font-size: 1.2em; color: #004AAD;">${suggestions.priceHint}</span></p>`;
+                htmlContent += '</div>';
+                
+                const result = await Swal.fire({
+                    title: '✨ Sugestões da IA',
+                    html: htmlContent,
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-check"></i> Aplicar sugestões',
+                    cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
+                    confirmButtonColor: '#28A745',
+                    cancelButtonColor: '#DC3545',
+                    width: '600px',
+                    customClass: {
+                        popup: 'swal-wide'
+                    }
+                });
+                
+                if (result.isConfirmed) {
+                    // Apply suggestions to form
                     if (suggestions.title) document.getElementById('title').value = suggestions.title;
                     if (suggestions.description) document.getElementById('description').value = suggestions.description;
                     if (suggestions.bedrooms) document.getElementById('bedrooms').value = suggestions.bedrooms;
                     if (suggestions.bathrooms) document.getElementById('bathrooms').value = suggestions.bathrooms;
                     if (suggestions.area) document.getElementById('area').value = String(suggestions.area).replace('.', ',');
+                    if (suggestions.parking) document.getElementById('parking').value = suggestions.parking;
                     if (suggestions.priceHint && !document.getElementById('price').value) {
                         document.getElementById('price').value = suggestions.priceHint.replace('R$ ', '').replace(/\./g, '');
                     }
+                    
+                    // Show success message
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Campos preenchidos!',
+                        text: 'As sugestões da IA foram aplicadas ao formulário',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
                 }
                 
             } catch (error) {
                 console.error('AI suggestion error:', error);
-                alert('Não foi possível obter sugestões da IA. Tente novamente.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Não foi possível obter sugestões da IA. Tente novamente.',
+                    confirmButtonColor: '#DC3545'
+                });
             } finally {
                 btnAiSuggest.disabled = false;
                 btnAiSuggest.innerHTML = '<i class="fas fa-magic"></i> Sugestões com IA';
