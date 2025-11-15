@@ -169,27 +169,47 @@ app.post('/api/upload', upload.array('images', 10), (req, res) => {
 // AI Suggestions endpoint  
 app.post('/api/ai/suggest', apiLimiter, async (req, res) => {
     try {
-        const { type, bedrooms, bathrooms, area, city, neighborhood } = req.body;
+        const { title, description, type, bedrooms, bathrooms, area, city, neighborhood } = req.body;
         
         // Check if OpenAI is configured
         const hasOpenAI = process.env.OPENAI_API_KEY;
         
         if (!hasOpenAI) {
-            // Provide template-based suggestions if no API key
+            // Provide smart template-based suggestions analyzing title/description
+            const text = (title || '') + ' ' + (description || '');
+            
+            // Extract information from text
+            const extractBedrooms = text.match(/(\d+)\s*(quarto|quart|qto|dormit)/i);
+            const extractBathrooms = text.match(/(\d+)\s*(banheiro|banh|wc)/i);
+            const extractArea = text.match(/(\d+)\s*m²/i);
+            const extractParking = text.match(/(\d+)\s*(vaga|garagem)/i);
+            
+            const suggestedBedrooms = extractBedrooms ? extractBedrooms[1] : bedrooms;
+            const suggestedBathrooms = extractBathrooms ? extractBathrooms[1] : bathrooms;
+            const suggestedArea = extractArea ? extractArea[1] : area;
+            
             const templates = {
-                title: `${type || 'Imóvel'} ${bedrooms ? `com ${bedrooms} quartos` : ''} ${neighborhood ? `em ${neighborhood}` : city || ''}`.trim(),
-                description: `Excelente ${type || 'imóvel'} ${area ? `com ${area}m²` : ''}, ${bedrooms ? `${bedrooms} quartos` : ''}, ${bathrooms ? `${bathrooms} banheiros` : ''}. Localização privilegiada ${neighborhood ? `no bairro ${neighborhood}` : city ? `em ${city}` : ''}. Ótima oportunidade!`,
-                priceHint: area ? `R$ ${(area * 3500).toLocaleString('pt-BR')}` : 'Consulte-nos para uma avaliação precisa'
+                title: title || `${type || 'Imóvel'} ${suggestedBedrooms ? `${suggestedBedrooms} quartos` : ''} ${neighborhood ? `em ${neighborhood}` : city || ''}`.trim(),
+                description: description || `Excelente ${type || 'imóvel'} ${suggestedArea ? `com ${suggestedArea}m²` : ''}, ${suggestedBedrooms ? `${suggestedBedrooms} quartos` : ''}, ${suggestedBathrooms ? `${suggestedBathrooms} banheiros` : ''}. Localização privilegiada ${neighborhood ? `no bairro ${neighborhood}` : city ? `em ${city}` : ''}. Ótima oportunidade!`,
+                bedrooms: suggestedBedrooms,
+                bathrooms: suggestedBathrooms,
+                area: suggestedArea,
+                priceHint: suggestedArea ? `R$ ${(suggestedArea * 3500).toLocaleString('pt-BR')}` : 'Consulte-nos para avaliação'
             };
             return res.json(templates);
         }
         
-        // Use OpenAI for intelligent suggestions
+        // Use OpenAI for intelligent suggestions from title/description
         const OpenAI = require('openai');
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         
-        const prompt = `Você é um especialista em marketing imobiliário no Brasil. Com base nos dados abaixo, crie uma sugestão profissional para anúncio de imóvel:
+        const prompt = `Você é um especialista em marketing imobiliário no Brasil. Analise o texto fornecido e crie sugestões profissionais para um anúncio de imóvel.
 
+TEXTO FORNECIDO:
+Título: ${title || 'não fornecido'}
+Descrição: ${description || 'não fornecido'}
+
+DADOS ADICIONAIS (se disponíveis):
 Tipo: ${type || 'não informado'}
 Quartos: ${bedrooms || 'não informado'}
 Banheiros: ${bathrooms || 'não informado'}
@@ -197,10 +217,19 @@ Banheiros: ${bathrooms || 'não informado'}
 Cidade: ${city || 'não informado'}
 Bairro: ${neighborhood || 'não informado'}
 
+TAREFAS:
+1. Se o título não foi fornecido, crie um título atrativo baseado na descrição e dados
+2. Se a descrição não foi fornecida, crie uma descrição profissional baseada no título e dados
+3. Extraia do texto informações como número de quartos, banheiros, área
+4. Sugira um preço de mercado realista para o Brasil
+
 Retorne APENAS um objeto JSON válido com:
-- title: título atrativo do anúncio (max 80 caracteres)
-- description: descrição profissional destacando pontos fortes (max 300 caracteres)
-- priceHint: estimativa de preço baseada no mercado brasileiro (formato: "R$ X.XXX.XXX")
+- title: título atrativo (max 80 caracteres)
+- description: descrição profissional (max 300 caracteres)  
+- bedrooms: número de quartos (número ou null)
+- bathrooms: número de banheiros (número ou null)
+- area: área em m² (número ou null)
+- priceHint: estimativa de preço (formato: "R$ X.XXX.XXX")
 
 Não adicione comentários, apenas o JSON puro.`;
 
@@ -208,7 +237,7 @@ Não adicione comentários, apenas o JSON puro.`;
             model: "gpt-3.5-turbo",
             messages: [{ role: "user", content: prompt }],
             temperature: 0.7,
-            max_tokens: 300
+            max_tokens: 400
         });
         
         const response = completion.choices[0].message.content;
@@ -223,11 +252,15 @@ Não adicione comentários, apenas o JSON puro.`;
         
     } catch (error) {
         console.error('AI suggestion error:', error);
-        // Fallback to template
-        const { type, bedrooms, area, city, neighborhood } = req.body;
+        // Fallback to smart template
+        const { title, description, type, bedrooms, area, city, neighborhood } = req.body;
+        const text = (title || '') + ' ' + (description || '');
+        const extractBedrooms = text.match(/(\d+)\s*(quarto|quart)/i);
+        
         res.json({
-            title: `${type || 'Imóvel'} ${bedrooms ? `${bedrooms} quartos` : ''} ${neighborhood || city || ''}`.trim(),
-            description: `Excelente ${type || 'imóvel'} ${area ? `com ${area}m²` : ''}. Ótima oportunidade em ${neighborhood || city || 'localização privilegiada'}!`,
+            title: title || `${type || 'Imóvel'} ${bedrooms || (extractBedrooms ? extractBedrooms[1] : '')} quartos ${neighborhood || city || ''}`.trim(),
+            description: description || `Excelente ${type || 'imóvel'} ${area ? `com ${area}m²` : ''}. Ótima oportunidade em ${neighborhood || city || 'localização privilegiada'}!`,
+            bedrooms: extractBedrooms ? extractBedrooms[1] : bedrooms,
             priceHint: area ? `R$ ${(area * 3500).toLocaleString('pt-BR')}` : 'Consulte para avaliação'
         });
     }

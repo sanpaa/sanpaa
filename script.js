@@ -174,7 +174,7 @@ function highlightNavigation() {
 
 window.addEventListener('scroll', highlightNavigation);
 
-// Load and display properties
+// Load and display properties with carousel
 async function loadProperties() {
     const propertiesGrid = document.getElementById('propertiesGrid');
     
@@ -197,50 +197,24 @@ async function loadProperties() {
                 </div>
             `;
         } else {
-            propertiesGrid.innerHTML = availableProperties.map(property => {
-                const images = property.imageUrls || (property.imageUrl ? [property.imageUrl] : []);
-                const firstImage = images.length > 0 ? images[0] : null;
-                const location = property.city ? 
-                    `${property.neighborhood || ''}, ${property.city} - ${property.state}` : 
-                    (property.location || 'Localização não informada');
-                
-                return `
-                <div class="property-card ${property.featured ? 'featured' : ''}">
-                    <div class="property-image">
-                        ${firstImage ? 
-                            `<img src="${firstImage}" alt="${property.title}" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image fa-3x\\'></i>'">` : 
-                            '<i class="fas fa-image fa-3x"></i>'
-                        }
-                        ${property.featured ? '<span class="property-badge featured"><i class="fas fa-star"></i> Destaque</span>' : ''}
-                        ${images.length > 1 ? `<span class="property-badge images"><i class="fas fa-images"></i> ${images.length} fotos</span>` : ''}
-                    </div>
-                    <div class="property-content">
-                        <span class="property-type">${property.type || 'Imóvel'}</span>
-                        <h3 class="property-title">${property.title}</h3>
-                        <div class="property-location">
-                            <i class="fas fa-map-marker-alt"></i>
-                            ${location}
-                        </div>
-                        <div class="property-price">
-                            R$ ${formatPropertyPrice(property.price)}
-                        </div>
-                        ${renderPropertyDetails(property)}
-                        ${property.description ? `<p class="property-description">${property.description}</p>` : ''}
-                        <div class="property-actions">
-                            <a href="https://wa.me/${property.contact.replace(/\D/g, '')}?text=Olá, tenho interesse no imóvel: ${encodeURIComponent(property.title)}" 
-                               class="btn btn-primary" target="_blank" style="flex: 1;">
-                                <i class="fab fa-whatsapp"></i> Tenho Interesse
-                            </a>
-                            ${property.latitude && property.longitude ? `
-                            <a href="https://www.google.com/maps?q=${property.latitude},${property.longitude}" 
-                               class="btn btn-secondary" target="_blank" title="Ver no Google Maps">
-                                <i class="fas fa-map-marked-alt"></i> Ver no Maps
-                            </a>
-                            ` : ''}
+            // Create carousel HTML
+            const carouselHTML = `
+                <div class="properties-carousel">
+                    <button class="carousel-btn prev" id="propertiesPrevBtn"><i class="fas fa-chevron-left"></i></button>
+                    <div class="carousel-container">
+                        <div class="carousel-track" id="carouselTrack">
+                            ${availableProperties.map(property => createPropertyCard(property)).join('')}
                         </div>
                     </div>
+                    <button class="carousel-btn next" id="propertiesNextBtn"><i class="fas fa-chevron-right"></i></button>
                 </div>
-            `}).join('');
+                <div class="carousel-dots" id="carouselDots"></div>
+            `;
+            
+            propertiesGrid.innerHTML = carouselHTML;
+            
+            // Initialize carousel
+            initPropertyCarousel(availableProperties.length);
         }
     } catch (error) {
         console.error('Error loading properties:', error);
@@ -255,6 +229,132 @@ async function loadProperties() {
             </div>
         `;
     }
+}
+
+function createPropertyCard(property) {
+    const images = property.imageUrls || (property.imageUrl ? [property.imageUrl] : []);
+    const firstImage = images.length > 0 ? images[0] : null;
+    const location = property.city ? 
+        `${property.neighborhood || ''}, ${property.city} - ${property.state}` : 
+        (property.location || 'Localização não informada');
+    
+    // Create embedded Google Map if coordinates available
+    const mapEmbed = (property.latitude && property.longitude) ? `
+        <div class="property-map">
+            <iframe
+                width="100%"
+                height="250"
+                frameborder="0"
+                style="border:0; border-radius: 8px;"
+                src="https://www.google.com/maps?q=${property.latitude},${property.longitude}&z=15&output=embed"
+                allowfullscreen>
+            </iframe>
+        </div>
+    ` : '';
+    
+    return `
+    <div class="property-card ${property.featured ? 'featured' : ''}">
+        <div class="property-image">
+            ${firstImage ? 
+                `<img src="${firstImage}" alt="${property.title}" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image fa-3x\\'></i>'">` : 
+                '<i class="fas fa-image fa-3x"></i>'
+            }
+            ${property.featured ? '<span class="property-badge featured"><i class="fas fa-star"></i> Destaque</span>' : ''}
+            ${images.length > 1 ? `<span class="property-badge images"><i class="fas fa-images"></i> ${images.length} fotos</span>` : ''}
+        </div>
+        <div class="property-content">
+            <span class="property-type">${property.type || 'Imóvel'}</span>
+            <h3 class="property-title">${property.title}</h3>
+            <div class="property-location">
+                <i class="fas fa-map-marker-alt"></i>
+                ${location}
+            </div>
+            <div class="property-price">
+                R$ ${formatPropertyPrice(property.price)}
+            </div>
+            ${renderPropertyDetails(property)}
+            ${property.description ? `<p class="property-description">${property.description}</p>` : ''}
+            ${mapEmbed}
+            <div class="property-actions">
+                <a href="https://wa.me/${property.contact.replace(/\D/g, '')}?text=Olá, tenho interesse no imóvel: ${encodeURIComponent(property.title)}" 
+                   class="btn btn-primary" target="_blank" style="flex: 1;">
+                    <i class="fab fa-whatsapp"></i> Tenho Interesse
+                </a>
+                ${property.latitude && property.longitude ? `
+                <a href="https://www.google.com/maps?q=${property.latitude},${property.longitude}" 
+                   class="btn btn-secondary" target="_blank" title="Ver no Google Maps">
+                    <i class="fas fa-map-marked-alt"></i> Ver no Maps
+                </a>
+                ` : ''}
+            </div>
+        </div>
+    </div>
+    `;
+}
+
+function initPropertyCarousel(totalProperties) {
+    if (totalProperties === 0) return;
+    
+    const track = document.getElementById('carouselTrack');
+    const prevBtn = document.getElementById('propertiesPrevBtn');
+    const nextBtn = document.getElementById('propertiesNextBtn');
+    const dotsContainer = document.getElementById('carouselDots');
+    
+    let currentIndex = 0;
+    const itemsPerSlide = window.innerWidth >= 968 ? 3 : 1;
+    const totalSlides = Math.ceil(totalProperties / itemsPerSlide);
+    
+    // Create dots
+    for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+        dot.addEventListener('click', () => goToSlide(i));
+        dotsContainer.appendChild(dot);
+    }
+    
+    function updateCarousel() {
+        const slideWidth = 100 / itemsPerSlide;
+        track.style.transform = `translateX(-${currentIndex * slideWidth}%)`;
+        
+        // Update dots
+        document.querySelectorAll('.carousel-dot').forEach((dot, index) => {
+            dot.classList.toggle('active', Math.floor(currentIndex / itemsPerSlide) === index);
+        });
+    }
+    
+    function goToSlide(slideIndex) {
+        currentIndex = slideIndex * itemsPerSlide;
+        if (currentIndex >= totalProperties) currentIndex = totalProperties - itemsPerSlide;
+        if (currentIndex < 0) currentIndex = 0;
+        updateCarousel();
+    }
+    
+    function nextSlide() {
+        currentIndex += itemsPerSlide;
+        if (currentIndex >= totalProperties) currentIndex = 0;
+        updateCarousel();
+    }
+    
+    function prevSlide() {
+        currentIndex -= itemsPerSlide;
+        if (currentIndex < 0) currentIndex = Math.floor((totalProperties - 1) / itemsPerSlide) * itemsPerSlide;
+        updateCarousel();
+    }
+    
+    prevBtn.addEventListener('click', prevSlide);
+    nextBtn.addEventListener('click', nextSlide);
+    
+    // Auto-advance carousel every 5 seconds
+    let autoAdvance = setInterval(nextSlide, 5000);
+    
+    // Pause on hover
+    track.parentElement.addEventListener('mouseenter', () => clearInterval(autoAdvance));
+    track.parentElement.addEventListener('mouseleave', () => {
+        clearInterval(autoAdvance);
+        autoAdvance = setInterval(nextSlide, 5000);
+    });
+    
+    updateCarousel();
 }
 
 function renderPropertyDetails(property) {

@@ -160,11 +160,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
-    // AI Suggestion functionality
+    // AI Suggestion functionality - Smart analysis from title/description
     const btnAiSuggest = document.getElementById('btnAiSuggest');
     if (btnAiSuggest) {
         btnAiSuggest.addEventListener('click', async () => {
-            // Get current form values
+            // Get current form values - AI works with title/description!
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
             const type = document.getElementById('type').value;
             const bedrooms = document.getElementById('bedrooms').value;
             const bathrooms = document.getElementById('bathrooms').value;
@@ -172,40 +174,46 @@ document.addEventListener('DOMContentLoaded', async () => {
             const city = document.getElementById('city').value;
             const neighborhood = document.getElementById('neighborhood').value;
             
-            if (!type || !area) {
-                alert('Preencha pelo menos o Tipo e a Área para obter sugestões da IA');
+            // Only need title OR description - AI will analyze text!
+            if (!title && !description) {
+                alert('Digite pelo menos um título ou descrição para a IA gerar sugestões inteligentes');
                 return;
             }
             
             btnAiSuggest.disabled = true;
-            btnAiSuggest.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando sugestões...';
+            btnAiSuggest.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
             
             try {
                 const response = await fetch('/api/ai/suggest', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type, bedrooms, bathrooms, area, city, neighborhood })
+                    body: JSON.stringify({ title, description, type, bedrooms, bathrooms, area, city, neighborhood })
                 });
                 
                 if (!response.ok) throw new Error('Erro ao obter sugestões');
                 
                 const suggestions = await response.json();
                 
-                // Show suggestions in a nice modal/alert
-                const apply = confirm(
-                    `✨ Sugestões da IA:\n\n` +
-                    `Título Sugerido:\n${suggestions.title}\n\n` +
-                    `Descrição Sugerida:\n${suggestions.description}\n\n` +
-                    `Estimativa de Preço:\n${suggestions.priceHint}\n\n` +
-                    `Deseja aplicar essas sugestões ao formulário?`
-                );
+                // Build suggestion message
+                let message = `✨ Sugestões da IA:\n\n`;
+                if (suggestions.title) message += `Título:\n${suggestions.title}\n\n`;
+                if (suggestions.description) message += `Descrição:\n${suggestions.description}\n\n`;
+                if (suggestions.bedrooms) message += `Quartos: ${suggestions.bedrooms}\n`;
+                if (suggestions.bathrooms) message += `Banheiros: ${suggestions.bathrooms}\n`;
+                if (suggestions.area) message += `Área: ${suggestions.area}m²\n`;
+                if (suggestions.priceHint) message += `\nPreço Estimado:\n${suggestions.priceHint}\n`;
+                message += `\nDeseja aplicar ao formulário?`;
+                
+                const apply = confirm(message);
                 
                 if (apply) {
-                    document.getElementById('title').value = suggestions.title;
-                    document.getElementById('description').value = suggestions.description;
-                    // Don't override price if user already has one
-                    if (!document.getElementById('price').value) {
-                        document.getElementById('price').value = suggestions.priceHint.replace('R$ ', '');
+                    if (suggestions.title) document.getElementById('title').value = suggestions.title;
+                    if (suggestions.description) document.getElementById('description').value = suggestions.description;
+                    if (suggestions.bedrooms) document.getElementById('bedrooms').value = suggestions.bedrooms;
+                    if (suggestions.bathrooms) document.getElementById('bathrooms').value = suggestions.bathrooms;
+                    if (suggestions.area) document.getElementById('area').value = String(suggestions.area).replace('.', ',');
+                    if (suggestions.priceHint && !document.getElementById('price').value) {
+                        document.getElementById('price').value = suggestions.priceHint.replace('R$ ', '').replace(/\./g, '');
                     }
                 }
                 
