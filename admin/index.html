@@ -142,12 +142,37 @@
             align-items: center;
             justify-content: center;
             color: var(--text-color);
+            position: relative;
         }
 
         .property-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+
+        .property-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            z-index: 10;
+        }
+
+        .property-badge.featured {
+            background: #FFD700;
+            color: #333;
+        }
+
+        .property-badge.sold {
+            background: var(--success-color);
+            color: var(--white);
         }
 
         .property-content {
@@ -421,8 +446,42 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="location">Localização *</label>
-                        <input type="text" id="location" placeholder="Ex: Centro, São Paulo - SP" required>
+                        <label for="cep">CEP *</label>
+                        <input type="text" id="cep" placeholder="12345-678" required maxlength="9">
+                        <small style="color: var(--text-color); margin-top: 0.5rem; display: block;">O endereço será preenchido automaticamente</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="street">Rua/Avenida</label>
+                            <input type="text" id="street" placeholder="Será preenchido automaticamente" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="neighborhood">Bairro</label>
+                            <input type="text" id="neighborhood" placeholder="Será preenchido automaticamente" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">Cidade</label>
+                            <input type="text" id="city" placeholder="Será preenchido automaticamente" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="state">Estado</label>
+                            <input type="text" id="state" placeholder="UF" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="latitude">Latitude</label>
+                            <input type="text" id="latitude" placeholder="Auto-gerado" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="longitude">Longitude</label>
+                            <input type="text" id="longitude" placeholder="Auto-gerado" readonly>
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -448,8 +507,24 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="imageUrl">URL da Imagem</label>
-                        <input type="url" id="imageUrl" placeholder="https://exemplo.com/imagem.jpg">
+                        <label for="imageUrls">URLs das Imagens (uma por linha)</label>
+                        <textarea id="imageUrls" placeholder="https://exemplo.com/imagem1.jpg&#10;https://exemplo.com/imagem2.jpg&#10;https://exemplo.com/imagem3.jpg" rows="4"></textarea>
+                        <small style="color: var(--text-color); margin-top: 0.5rem; display: block;">Cole URLs de imagens, uma por linha (mínimo 1, recomendado 3-5)</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="featured">
+                                <input type="checkbox" id="featured" style="width: auto; margin-right: 0.5rem;">
+                                Imóvel em Destaque
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="sold">
+                                <input type="checkbox" id="sold" style="width: auto; margin-right: 0.5rem;">
+                                Marcar como Vendido
+                            </label>
+                        </div>
                     </div>
 
                     <div class="form-group">

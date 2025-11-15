@@ -8,7 +8,74 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Setup form submit handler
     document.getElementById('propertyForm').addEventListener('submit', handleFormSubmit);
+    
+    // Setup CEP auto-fill
+    document.getElementById('cep').addEventListener('blur', handleCEPLookup);
+    
+    // Format CEP as user types
+    document.getElementById('cep').addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 5) {
+            value = value.slice(0, 5) + '-' + value.slice(5, 8);
+        }
+        e.target.value = value;
+    });
 });
+
+// Handle CEP lookup
+async function handleCEPLookup() {
+    const cepInput = document.getElementById('cep');
+    const cep = cepInput.value.replace(/\D/g, '');
+    
+    if (cep.length !== 8) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/cep/${cep}`);
+        
+        if (!response.ok) {
+            alert('CEP não encontrado');
+            return;
+        }
+        
+        const data = await response.json();
+        
+        // Fill address fields
+        document.getElementById('street').value = data.street || '';
+        document.getElementById('neighborhood').value = data.neighborhood || '';
+        document.getElementById('city').value = data.city || '';
+        document.getElementById('state').value = data.state || '';
+        
+        // Geocode the address
+        await geocodeAddress(data.address);
+        
+    } catch (error) {
+        console.error('Error looking up CEP:', error);
+        alert('Erro ao buscar CEP. Tente novamente.');
+    }
+}
+
+// Geocode address to get lat/lng
+async function geocodeAddress(address) {
+    try {
+        const response = await fetch('/api/geocode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ address })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('latitude').value = data.lat;
+            document.getElementById('longitude').value = data.lng;
+        }
+    } catch (error) {
+        console.error('Error geocoding address:', error);
+    }
+}
 
 // Load all properties
 async function loadProperties() {
@@ -34,20 +101,27 @@ function renderProperties() {
     }
 
     emptyState.style.display = 'none';
-    container.innerHTML = properties.map(property => `
+    container.innerHTML = properties.map(property => {
+        const images = property.imageUrls || (property.imageUrl ? [property.imageUrl] : []);
+        const firstImage = images.length > 0 ? images[0] : null;
+        const location = property.city ? `${property.neighborhood}, ${property.city} - ${property.state}` : (property.location || 'Localização não informada');
+        
+        return `
         <div class="property-card">
             <div class="property-image">
-                ${property.imageUrl ? 
-                    `<img src="${property.imageUrl}" alt="${property.title}" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image fa-3x\\'></i>'">` : 
+                ${firstImage ? 
+                    `<img src="${firstImage}" alt="${property.title}" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image fa-3x\\'></i>'">` : 
                     '<i class="fas fa-image fa-3x"></i>'
                 }
+                ${property.featured ? '<span class="property-badge featured"><i class="fas fa-star"></i> Destaque</span>' : ''}
+                ${property.sold ? '<span class="property-badge sold"><i class="fas fa-check"></i> Vendido</span>' : ''}
             </div>
             <div class="property-content">
                 <span class="property-type">${property.type || 'Imóvel'}</span>
                 <h3 class="property-title">${property.title}</h3>
                 <div class="property-location">
                     <i class="fas fa-map-marker-alt"></i>
-                    ${property.location}
+                    ${location}
                 </div>
                 <div class="property-price">
                     R$ ${formatPrice(property.price)}
@@ -63,7 +137,7 @@ function renderProperties() {
                 </div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 // Render property details
@@ -115,12 +189,24 @@ function editProperty(id) {
     document.getElementById('title').value = property.title || '';
     document.getElementById('description').value = property.description || '';
     document.getElementById('price').value = property.price || '';
-    document.getElementById('location').value = property.location || '';
+    document.getElementById('cep').value = property.cep || '';
+    document.getElementById('street').value = property.street || '';
+    document.getElementById('neighborhood').value = property.neighborhood || '';
+    document.getElementById('city').value = property.city || '';
+    document.getElementById('state').value = property.state || '';
+    document.getElementById('latitude').value = property.latitude || '';
+    document.getElementById('longitude').value = property.longitude || '';
     document.getElementById('bedrooms').value = property.bedrooms || '';
     document.getElementById('bathrooms').value = property.bathrooms || '';
     document.getElementById('area').value = property.area || '';
     document.getElementById('parking').value = property.parking || '';
-    document.getElementById('imageUrl').value = property.imageUrl || '';
+    
+    // Handle image URLs
+    const images = property.imageUrls || (property.imageUrl ? [property.imageUrl] : []);
+    document.getElementById('imageUrls').value = images.join('\n');
+    
+    document.getElementById('featured').checked = property.featured || false;
+    document.getElementById('sold').checked = property.sold || false;
     document.getElementById('contact').value = property.contact || '';
     
     document.getElementById('propertyModal').classList.add('active');
@@ -136,17 +222,30 @@ function closeModal() {
 async function handleFormSubmit(e) {
     e.preventDefault();
 
+    // Parse image URLs from textarea
+    const imageUrlsText = document.getElementById('imageUrls').value.trim();
+    const imageUrls = imageUrlsText ? imageUrlsText.split('\n').filter(url => url.trim()).map(url => url.trim()) : [];
+
     const propertyData = {
         type: document.getElementById('type').value,
         title: document.getElementById('title').value,
         description: document.getElementById('description').value,
         price: parseFloat(document.getElementById('price').value),
-        location: document.getElementById('location').value,
+        cep: document.getElementById('cep').value,
+        street: document.getElementById('street').value,
+        neighborhood: document.getElementById('neighborhood').value,
+        city: document.getElementById('city').value,
+        state: document.getElementById('state').value,
+        latitude: document.getElementById('latitude').value,
+        longitude: document.getElementById('longitude').value,
         bedrooms: parseInt(document.getElementById('bedrooms').value) || 0,
         bathrooms: parseInt(document.getElementById('bathrooms').value) || 0,
         area: parseFloat(document.getElementById('area').value) || 0,
         parking: parseInt(document.getElementById('parking').value) || 0,
-        imageUrl: document.getElementById('imageUrl').value,
+        imageUrls: imageUrls,
+        imageUrl: imageUrls.length > 0 ? imageUrls[0] : '', // Keep backward compatibility
+        featured: document.getElementById('featured').checked,
+        sold: document.getElementById('sold').checked,
         contact: document.getElementById('contact').value
     };
 

@@ -4,6 +4,7 @@ const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -99,6 +100,67 @@ async function writeProperties(properties) {
 }
 
 // API Routes
+
+// CEP Lookup endpoint
+app.get('/api/cep/:cep', async (req, res) => {
+    try {
+        const cep = req.params.cep.replace(/\D/g, '');
+        if (cep.length !== 8) {
+            return res.status(400).json({ error: 'CEP inválido' });
+        }
+        
+        const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+        
+        if (response.data.erro) {
+            return res.status(404).json({ error: 'CEP não encontrado' });
+        }
+        
+        res.json({
+            cep: response.data.cep,
+            street: response.data.logradouro,
+            neighborhood: response.data.bairro,
+            city: response.data.localidade,
+            state: response.data.uf,
+            // Nominatim uses a simpler geocoding format
+            address: `${response.data.logradouro}, ${response.data.bairro}, ${response.data.localidade}, ${response.data.uf}, Brasil`
+        });
+    } catch (error) {
+        console.error('CEP lookup error:', error);
+        res.status(500).json({ error: 'Erro ao buscar CEP' });
+    }
+});
+
+// Geocoding endpoint (converts address to lat/lng)
+app.post('/api/geocode', async (req, res) => {
+    try {
+        const { address } = req.body;
+        
+        // Using Nominatim (OpenStreetMap) for geocoding - free and no API key required
+        const response = await axios.get('https://nominatim.openstreetmap.org/search', {
+            params: {
+                q: address,
+                format: 'json',
+                limit: 1
+            },
+            headers: {
+                'User-Agent': 'AlancarmoCorretor/1.0'
+            }
+        });
+        
+        if (response.data && response.data.length > 0) {
+            const result = response.data[0];
+            res.json({
+                lat: parseFloat(result.lat),
+                lng: parseFloat(result.lon)
+            });
+        } else {
+            res.status(404).json({ error: 'Endereço não encontrado' });
+        }
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        res.status(500).json({ error: 'Erro ao geocodificar endereço' });
+    }
+});
 
 // Get all properties
 app.get('/api/properties', async (req, res) => {
