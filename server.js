@@ -169,144 +169,122 @@ app.post('/api/upload', upload.array('images', 10), (req, res) => {
 // AI Suggestions endpoint  
 app.post('/api/ai/suggest', apiLimiter, async (req, res) => {
     try {
-        const { title, description, type, bedrooms, bathrooms, area, city, neighborhood } = req.body;
+        const { title, description, type, bedrooms, bathrooms, area, parking, city, neighborhood } = req.body;
         
-        // Check if OpenAI is configured
-        const hasOpenAI = process.env.OPENAI_API_KEY;
+        console.log('✨ AI REQUEST:', { title, description, type, bedrooms, area });
         
-        if (!hasOpenAI) {
-            // Provide smart template-based suggestions analyzing title/description
-            const text = (title || '') + ' ' + (description || '');
-            
-            // Extract information from text
-            const extractBedrooms = text.match(/(\d+)\s*(quarto|quart|qto|dormit)/i);
-            const extractBathrooms = text.match(/(\d+)\s*(banheiro|banh|wc)/i);
-            const extractArea = text.match(/(\d+)\s*m²/i);
-            const extractParking = text.match(/(\d+)\s*(vaga|garagem)/i);
-            
-            const suggestedBedrooms = extractBedrooms ? extractBedrooms[1] : bedrooms;
-            const suggestedBathrooms = extractBathrooms ? extractBathrooms[1] : bathrooms;
-            const suggestedArea = extractArea ? extractArea[1] : area;
-            
-            const templates = {
-                title: title || `${type || 'Imóvel'} ${suggestedBedrooms ? `${suggestedBedrooms} quartos` : ''} ${neighborhood ? `em ${neighborhood}` : city || ''}`.trim(),
-                description: description || `Excelente ${type || 'imóvel'} ${suggestedArea ? `com ${suggestedArea}m²` : ''}, ${suggestedBedrooms ? `${suggestedBedrooms} quartos` : ''}, ${suggestedBathrooms ? `${suggestedBathrooms} banheiros` : ''}. Localização privilegiada ${neighborhood ? `no bairro ${neighborhood}` : city ? `em ${city}` : ''}. Ótima oportunidade!`,
-                bedrooms: suggestedBedrooms,
-                bathrooms: suggestedBathrooms,
-                area: suggestedArea,
-                priceHint: suggestedArea ? `R$ ${(suggestedArea * 3500).toLocaleString('pt-BR')}` : 'Consulte-nos para avaliação'
-            };
-            return res.json(templates);
+        if (!title && !description) {
+            return res.status(400).json({ error: 'Digite título ou descrição' });
         }
         
-        // Use Hugging Face for intelligent suggestions from title/description
-        const { HfInference } = require('@huggingface/inference');
-        const hf = new HfInference(process.env.HUGGINGFACE_TOKEN); // Token optional for free tier
-        
-        // Smart extraction from text
+        // SMART AI: Extract ALL data from text
         const text = (title || '') + ' ' + (description || '');
         const textLower = text.toLowerCase();
         
         // Extract bedrooms
-        const bedroomsMatch = textLower.match(/(\d+)\s*(quarto|quart|qto|bedroom)/i);
-        const extractedBedrooms = bedroomsMatch ? parseInt(bedroomsMatch[1]) : null;
+        const bedroomsMatch = textLower.match(/(\d+)\s*(quarto|quart|qto|bedroom|qt)/i);
+        const extractedBedrooms = bedroomsMatch ? parseInt(bedroomsMatch[1]) : (bedrooms || null);
         
-        // Extract bathrooms
-        const bathroomsMatch = textLower.match(/(\d+)\s*(banheiro|banh|bathroom|wc)/i);
-        const extractedBathrooms = bathroomsMatch ? parseInt(bathroomsMatch[1]) : null;
+        // Extract bathrooms  
+        const bathroomsMatch = textLower.match(/(\d+)\s*(banheiro|banh|bathroom|wc|bwc)/i);
+        const extractedBathrooms = bathroomsMatch ? parseInt(bathroomsMatch[1]) : (bathrooms || null);
         
         // Extract area
         const areaMatch = textLower.match(/(\d+)\s*(m²|m2|metros|metro)/i);
-        const extractedArea = areaMatch ? parseInt(areaMatch[1]) : null;
+        const extractedArea = areaMatch ? parseInt(areaMatch[1]) : (area ? parseInt(area) : null);
         
         // Extract parking
-        const parkingMatch = textLower.match(/(\d+)\s*(vaga|garagem|parking)/i);
-        const extractedParking = parkingMatch ? parseInt(parkingMatch[1]) : null;
+        const parkingMatch = textLower.match(/(\d+)\s*(vaga|garagem|parking|garage)/i);
+        const extractedParking = parkingMatch ? parseInt(parkingMatch[1]) : (parking || null);
         
-        // Generate missing title or description using AI
+        console.log('✅ EXTRACTED:', { bedrooms: extractedBedrooms, bathrooms: extractedBathrooms, area: extractedArea, parking: extractedParking });
+        
+        // Generate TITLE from description if missing
         let generatedTitle = title;
-        let generatedDescription = description;
-        
-        try {
-            if (!title && description) {
-                // Generate title from description
-                const titlePrompt = `Crie um título atrativo de no máximo 60 caracteres para este imóvel: ${description}`;
-                const titleResult = await hf.summarization({
-                    model: 'facebook/bart-large-cnn',
-                    inputs: titlePrompt,
-                    parameters: { max_length: 60, min_length: 20 }
-                });
-                generatedTitle = titleResult.summary_text || description.substring(0, 60);
-            }
+        if (!title && description) {
+            const propertyType = type || 'Imóvel';
+            const location = neighborhood || city || '';
+            const rooms = extractedBedrooms ? `${extractedBedrooms} Quartos` : '';
+            const areaInfo = extractedArea ? `${extractedArea}m²` : '';
             
-            if (!description && title) {
-                // Generate description from title using text generation
-                const descPrompt = `${title}. Imóvel brasileiro com`;
-                const descResult = await hf.textGeneration({
-                    model: 'gpt2',
-                    inputs: descPrompt,
-                    parameters: { max_new_tokens: 100, temperature: 0.7 }
-                });
-                generatedDescription = descResult.generated_text.replace(descPrompt, '').trim();
-                // Clean up and make professional
-                generatedDescription = `Excelente ${type || 'imóvel'} localizado em ${neighborhood || city || 'ótima região'}. ${generatedDescription || 'Oportunidade imperdível! Agende sua visita.'}`.substring(0, 300);
-            }
-        } catch (aiError) {
-            console.error('AI generation error:', aiError);
-            // Fallback generation
-            if (!title && description) {
-                generatedTitle = description.substring(0, 60) + '...';
-            }
-            if (!description && title) {
-                generatedDescription = `Excelente ${type || 'imóvel'} - ${title}. ${extractedBedrooms ? extractedBedrooms + ' quartos' : ''}${extractedArea ? ', ' + extractedArea + 'm²' : ''}. Localizado em ${neighborhood || city || 'ótima região'}. Agende sua visita!`;
+            generatedTitle = `${propertyType} ${rooms} ${location} ${areaInfo}`.trim().replace(/\s+/g, ' ');
+            
+            // Add special features mentioned
+            if (textLower.includes('piscina')) generatedTitle += ' com Piscina';
+            if (textLower.includes('churrasqueira')) generatedTitle += ' e Churrasqueira';
+            if (textLower.includes('varanda') || textLower.includes('sacada')) generatedTitle += ' com Varanda';
+            
+            // Limit to 80 chars
+            if (generatedTitle.length > 80) {
+                generatedTitle = generatedTitle.substring(0, 77) + '...';
             }
         }
         
-        // Smart price suggestion based on area and location
-        let priceHint = 'Consulte para avaliação';
-        const finalArea = extractedArea || area;
-        if (finalArea) {
-            // Price per m² varies by location (São Paulo higher, others lower)
-            const locationLower = (city || neighborhood || '').toLowerCase();
-            let pricePerM2 = 3500; // Default
+        // Generate DESCRIPTION from title if missing
+        let generatedDescription = description;
+        if (!description && title) {
+            const propertyType = type || 'imóvel';
+            const features = [];
             
-            if (locationLower.includes('são paulo') || locationLower.includes('sp') || locationLower.includes('jardins') || locationLower.includes('moema') || locationLower.includes('itaim')) {
-                pricePerM2 = 8000; // Premium areas
-            } else if (locationLower.includes('rio') || locationLower.includes('rj') || locationLower.includes('barra') || locationLower.includes('ipanema')) {
-                pricePerM2 = 7000; // Rio premium
-            } else if (locationLower.includes('centro') || locationLower.includes('downtown')) {
-                pricePerM2 = 5000; // City center
+            if (extractedBedrooms) features.push(`${extractedBedrooms} ${extractedBedrooms > 1 ? 'quartos' : 'quarto'}`);
+            if (extractedBathrooms) features.push(`${extractedBathrooms} ${extractedBathrooms > 1 ? 'banheiros' : 'banheiro'}`);
+            if (extractedArea) features.push(`${extractedArea}m² de área`);
+            if (extractedParking) features.push(`${extractedParking} ${extractedParking > 1 ? 'vagas' : 'vaga'} de garagem`);
+            
+            // Add detected amenities
+            if (textLower.includes('piscina')) features.push('piscina');
+            if (textLower.includes('churrasqueira')) features.push('churrasqueira');
+            if (textLower.includes('varanda') || textLower.includes('sacada')) features.push('varanda gourmet');
+            if (textLower.includes('armário') || textLower.includes('armarios')) features.push('armários embutidos');
+            if (textLower.includes('suite') || textLower.includes('suíte')) features.push('suíte');
+            
+            const loc = neighborhood || city || 'excelente localização';
+            const featuresText = features.length > 0 ? `com ${features.join(', ')}` : '';
+            
+            generatedDescription = `Excelente ${propertyType} ${featuresText}. Localizado em ${loc}, oferece conforto e praticidade para você e sua família. ${extractedArea ? `Imóvel de ${extractedArea}m²` : 'Espaço amplo'} em localização privilegiada. Agende sua visita e conheça este imóvel incrível!`;
+        }
+        
+        // SMART PRICE SUGGESTION
+        let priceHint = 'Consulte-nos para avaliação';
+        const finalArea = extractedArea;
+        if (finalArea) {
+            const locationLower = ((city || '') + ' ' + (neighborhood || '')).toLowerCase();
+            let pricePerM2 = 4000; // Default
+            
+            // Premium areas
+            if (locationLower.includes('jardins') || locationLower.includes('itaim') || locationLower.includes('moema') || locationLower.includes('vila olimpia') || locationLower.includes('leblon') || locationLower.includes('ipanema')) {
+                pricePerM2 = 10000;
+            } else if (locationLower.includes('são paulo') || locationLower.includes('sp') || locationLower.includes('rio') || locationLower.includes('rj')) {
+                pricePerM2 = 7000;
+            } else if (locationLower.includes('centro')) {
+                pricePerM2 = 5500;
             }
             
-            const estimatedPrice = finalArea * pricePerM2;
+            // Adjust for property type
+            if (type && type.toLowerCase().includes('apartamento')) {
+                pricePerM2 *= 1.1; // Apartments slightly more expensive per m²
+            }
+            
+            const estimatedPrice = Math.round(finalArea * pricePerM2);
             priceHint = `R$ ${estimatedPrice.toLocaleString('pt-BR')}`;
         }
         
         const suggestions = {
-            title: generatedTitle || `${type || 'Imóvel'} ${extractedBedrooms || bedrooms || ''} quartos ${neighborhood || city || ''}`.trim(),
-            description: generatedDescription || `Excelente ${type || 'imóvel'} ${finalArea ? `com ${finalArea}m²` : ''}. ${extractedBedrooms || bedrooms ? (extractedBedrooms || bedrooms) + ' quartos' : ''}. Localização privilegiada em ${neighborhood || city || 'ótima região'}. Agende sua visita!`,
-            bedrooms: extractedBedrooms || bedrooms,
-            bathrooms: extractedBathrooms || bathrooms,
-            area: extractedArea || area,
-            parking: extractedParking || parking,
+            title: generatedTitle || `${type || 'Imóvel'} em ${neighborhood || city || 'Ótima Localização'}`,
+            description: generatedDescription || `Excelente ${type || 'imóvel'} em ${neighborhood || city || 'ótima localização'}. Agende sua visita!`,
+            bedrooms: extractedBedrooms,
+            bathrooms: extractedBathrooms,
+            area: extractedArea,
+            parking: extractedParking,
             priceHint: priceHint
         };
         
+        console.log('✅ AI GENERATED:', suggestions);
         res.json(suggestions);
         
     } catch (error) {
-        console.error('AI suggestion error:', error);
-        // Fallback to smart template
-        const { title, description, type, bedrooms, area, city, neighborhood } = req.body;
-        const text = (title || '') + ' ' + (description || '');
-        const extractBedrooms = text.match(/(\d+)\s*(quarto|quart)/i);
-        
-        res.json({
-            title: title || `${type || 'Imóvel'} ${bedrooms || (extractBedrooms ? extractBedrooms[1] : '')} quartos ${neighborhood || city || ''}`.trim(),
-            description: description || `Excelente ${type || 'imóvel'} ${area ? `com ${area}m²` : ''}. Ótima oportunidade em ${neighborhood || city || 'localização privilegiada'}!`,
-            bedrooms: extractBedrooms ? extractBedrooms[1] : bedrooms,
-            priceHint: area ? `R$ ${(area * 3500).toLocaleString('pt-BR')}` : 'Consulte para avaliação'
-        });
+        console.error('❌ AI ERROR:', error);
+        res.status(500).json({ error: 'Erro ao gerar sugestões' });
     }
 });
 

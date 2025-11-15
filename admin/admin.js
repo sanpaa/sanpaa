@@ -524,12 +524,22 @@ async function handleFormSubmit(e) {
             if (uploadResponse.ok) {
                 const uploadResult = await uploadResponse.json();
                 uploadedImageUrls = uploadResult.imageUrls.map(url => window.location.origin + url);
+                console.log('✅ Images uploaded:', uploadedImageUrls);
             } else {
-                alert('Erro ao fazer upload das imagens. Continuando com URLs fornecidas.');
+                console.error('Upload failed:', uploadResponse.status);
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Aviso',
+                    text: 'Erro ao fazer upload das imagens. Continuando com URLs fornecidas.'
+                });
             }
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Erro ao fazer upload das imagens. Continuando com URLs fornecidas.');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Aviso',
+                text: 'Erro ao fazer upload das imagens. Continuando com URLs fornecidas.'
+            });
         }
     }
 
