@@ -5,10 +5,18 @@ const fs = require('fs').promises;
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 const axios = require('axios');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'properties.json');
+
+// Simple admin credentials (in production, use database)
+const ADMIN_USER = 'admin';
+const ADMIN_PASSWORD_HASH = bcrypt.hashSync('admin123', 10); // Change this password!
+
+// Simple token store (in production, use JWT or session management)
+const activeTokens = new Set();
 
 // Rate limiting for API endpoints
 const apiLimiter = rateLimit({
@@ -162,6 +170,67 @@ app.post('/api/geocode', async (req, res) => {
         console.error('Geocoding error:', error);
         res.status(500).json({ error: 'Erro ao geocodificar endereço' });
     }
+});
+
+// Authentication endpoints
+app.post('/api/auth/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
+    }
+    
+    if (username === ADMIN_USER && bcrypt.compareSync(password, ADMIN_PASSWORD_HASH)) {
+        // Generate simple token (in production, use JWT)
+        const token = Buffer.from(`${Date.now()}-${Math.random()}`).toString('base64');
+        activeTokens.add(token);
+        
+        res.json({ 
+            success: true, 
+            token,
+            message: 'Login realizado com sucesso'
+        });
+    } else {
+        res.status(401).json({ error: 'Usuário ou senha inválidos' });
+    }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+        activeTokens.delete(token);
+    }
+    res.json({ success: true, message: 'Logout realizado com sucesso' });
+});
+
+app.get('/api/auth/verify', (req, res) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (token && activeTokens.has(token)) {
+        res.json({ valid: true });
+    } else {
+        res.status(401).json({ valid: false });
+    }
+});
+
+// Statistics endpoint
+app.get('/api/stats', async (req, res) => {
+    const properties = await readProperties();
+    
+    const stats = {
+        total: properties.length,
+        available: properties.filter(p => !p.sold).length,
+        sold: properties.filter(p => p.sold).length,
+        featured: properties.filter(p => p.featured && !p.sold).length,
+        byType: {}
+    };
+    
+    // Count by type
+    properties.forEach(p => {
+        const type = p.type || 'Outro';
+        stats.byType[type] = (stats.byType[type] || 0) + 1;
+    });
+    
+    res.json(stats);
 });
 
 // Get all properties

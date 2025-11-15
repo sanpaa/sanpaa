@@ -2,8 +2,107 @@ const API_URL = '/api/properties';
 let properties = [];
 let editingId = null;
 
+// Check authentication on page load
+async function checkAuth() {
+    const token = localStorage.getItem('adminToken');
+    
+    if (!token) {
+        window.location.href = '/admin/login.html';
+        return false;
+    }
+    
+    try {
+        const response = await fetch('/api/auth/verify', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            localStorage.removeItem('adminToken');
+            window.location.href = '/admin/login.html';
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        window.location.href = '/admin/login.html';
+        return false;
+    }
+}
+
+// Logout function
+async function logout() {
+    const token = localStorage.getItem('adminToken');
+    
+    if (token) {
+        try {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    }
+    
+    localStorage.removeItem('adminToken');
+    window.location.href = '/admin/login.html';
+}
+
+// Load dashboard stats
+async function loadStats() {
+    try {
+        const response = await fetch('/api/stats');
+        const stats = await response.json();
+        
+        const statsSection = document.getElementById('statsSection');
+        statsSection.innerHTML = `
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="stat-value">${stats.total}</div>
+                <div class="stat-label">Total de Imóveis</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-value">${stats.available}</div>
+                <div class="stat-label">Disponíveis</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-value">${stats.featured}</div>
+                <div class="stat-label">Em Destaque</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="stat-value">${stats.sold}</div>
+                <div class="stat-label">Vendidos</div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
 // Load properties on page load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check authentication first
+    const isAuthenticated = await checkAuth();
+    if (!isAuthenticated) return;
+    
+    // Load stats and properties
+    await loadStats();
     loadProperties();
     
     // Setup form submit handler
@@ -273,6 +372,7 @@ async function handleFormSubmit(e) {
 
         if (response.ok) {
             closeModal();
+            await loadStats(); // Refresh stats
             loadProperties();
             alert(editingId ? 'Imóvel atualizado com sucesso!' : 'Imóvel adicionado com sucesso!');
         } else {
@@ -296,6 +396,7 @@ async function deleteProperty(id) {
         });
 
         if (response.ok) {
+            await loadStats(); // Refresh stats
             loadProperties();
             alert('Imóvel excluído com sucesso!');
         } else {
