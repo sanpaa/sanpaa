@@ -163,19 +163,27 @@ export class SearchComponent implements OnInit, AfterViewInit {
   switchView(view: 'grid' | 'map'): void {
     this.currentView = view;
     if (view === 'map') {
-      setTimeout(() => this.initMap(), 100);
+      // Give Angular time to render the map div
+      setTimeout(() => this.initMap(), 300);
     }
   }
   
   private initMap(): void {
     if (this.map) {
+      // Map already exists, just update markers and invalidate size
+      this.map.invalidateSize();
       this.updateMapMarkers();
       return;
     }
 
     const mapElement = document.getElementById('map');
-    if (!mapElement) return;
+    if (!mapElement) {
+      console.error('Map element not found!');
+      return;
+    }
 
+    console.log('Initializing map...');
+    
     // Default center (São Paulo)
     this.map = L.map('map').setView([-23.550520, -46.633308], 12);
 
@@ -184,11 +192,15 @@ export class SearchComponent implements OnInit, AfterViewInit {
       maxZoom: 19
     }).addTo(this.map);
 
+    console.log('Map initialized, adding markers...');
     this.updateMapMarkers();
   }
 
   private updateMapMarkers(): void {
-    if (!this.map) return;
+    if (!this.map) {
+      console.error('Map not initialized!');
+      return;
+    }
 
     // Clear existing marker cluster
     if (this.markerCluster) {
@@ -196,8 +208,11 @@ export class SearchComponent implements OnInit, AfterViewInit {
     }
 
     const validProperties = this.filteredProperties.filter(p => p.latitude && p.longitude);
+    
+    console.log(`Found ${validProperties.length} properties with coordinates out of ${this.filteredProperties.length} total`);
 
     if (validProperties.length === 0) {
+      console.warn('No properties with valid coordinates');
       this.map.setView([-23.550520, -46.633308], 12);
       return;
     }
@@ -279,10 +294,13 @@ export class SearchComponent implements OnInit, AfterViewInit {
 
     // Add cluster group to map
     this.map.addLayer(this.markerCluster);
+    
+    console.log(`Added ${validProperties.length} markers to the map`);
 
     // Fit map to show all markers
     if (bounds.length > 0) {
       this.map.fitBounds(bounds, { padding: [50, 50] });
+      console.log('Map bounds fitted to show all markers');
     }
   }
   
