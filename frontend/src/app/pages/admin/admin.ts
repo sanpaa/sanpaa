@@ -241,6 +241,37 @@ export class AdminComponent implements OnInit {
     }
   }
 
+  lookupCEP(): void {
+    const cep = this.formData.zipCode?.replace(/\D/g, '');
+    if (!cep || cep.length !== 8) return;
+
+    this.propertyService.lookupCEP(cep).subscribe({
+      next: (data) => {
+        if (data.street) this.formData.street = data.street;
+        if (data.neighborhood) this.formData.neighborhood = data.neighborhood;
+        if (data.city) this.formData.city = data.city;
+        if (data.state) this.formData.state = data.state;
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'CEP encontrado!',
+          text: 'Endereço preenchido automaticamente',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      },
+      error: (err) => {
+        Swal.fire({
+          icon: 'warning',
+          title: 'CEP não encontrado',
+          text: 'Preencha o endereço manualmente',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }
+    });
+  }
+
   getAiSuggestions(): void {
     if (!this.formData.title && !this.formData.description) {
       Swal.fire({

@@ -734,6 +734,22 @@ section {
     min-width: 100%;
     margin: 0 15px;
     flex-shrink: 0;
+    /* Add padding inside carousel to prevent cut-off */
+}
+
+/* Add padding to carousel container to show cards properly */
+.carousel-container {
+    padding: 0 50px; /* Space for nav buttons */
+}
+
+@media (max-width: 768px) {
+    .carousel-container {
+        padding: 0 40px;
+    }
+    
+    .carousel-track .property-card {
+        margin: 0 10px;
+    }
 }
 
 .carousel-btn {

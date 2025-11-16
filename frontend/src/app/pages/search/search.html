@@ -96,6 +96,18 @@
     <div class="results-header">
       <div class="results-count">{{ resultsCount }}</div>
       <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <div class="view-toggle">
+          <button 
+            [class.active]="currentView === 'grid'" 
+            (click)="switchView('grid')">
+            <i class="fas fa-th"></i> Grade
+          </button>
+          <button 
+            [class.active]="currentView === 'map'" 
+            (click)="switchView('map')">
+            <i class="fas fa-map"></i> Mapa
+          </button>
+        </div>
         <select class="sort-select" [(ngModel)]="sortBy" (change)="sortProperties()">
           <option value="featured">Destaques primeiro</option>
           <option value="price-asc">Menor preço</option>
@@ -105,8 +117,11 @@
       </div>
     </div>
 
+    <!-- Map View -->
+    <div id="map" *ngIf="currentView === 'map'" class="map-view"></div>
+
     <!-- Loading State -->
-    <div *ngIf="loading" class="properties-grid">
+    <div *ngIf="loading && currentView === 'grid'" class="properties-grid">
       <div *ngFor="let i of [1,2,3,4,5,6]" class="skeleton-card">
         <div class="skeleton skeleton-image"></div>
         <div class="skeleton-content">
@@ -119,12 +134,12 @@
     </div>
 
     <!-- Results Grid -->
-    <div *ngIf="!loading && !error && displayedProperties.length > 0" class="properties-grid">
+    <div *ngIf="!loading && !error && displayedProperties.length > 0 && currentView === 'grid'" class="properties-grid">
       <app-property-card *ngFor="let property of displayedProperties" [property]="property"></app-property-card>
     </div>
 
     <!-- No Results -->
-    <div *ngIf="!loading && !error && displayedProperties.length === 0" class="no-results">
+    <div *ngIf="!loading && !error && displayedProperties.length === 0 && currentView === 'grid'" class="no-results">
       <i class="fas fa-search"></i>
       <h3>Nenhum imóvel encontrado</h3>
       <p>Tente ajustar os filtros ou entre em contato para mais opções</p>
@@ -134,7 +149,7 @@
     </div>
 
     <!-- Error State -->
-    <div *ngIf="error" class="no-results">
+    <div *ngIf="error && currentView === 'grid'" class="no-results">
       <i class="fas fa-exclamation-triangle"></i>
       <h3>Erro ao carregar imóveis</h3>
       <p>Por favor, tente novamente mais tarde ou entre em contato</p>
@@ -144,7 +159,7 @@
     </div>
 
     <!-- Pagination -->
-    <div *ngIf="!loading && !error && totalPages > 1" class="pagination">
+    <div *ngIf="!loading && !error && totalPages > 1 && currentView === 'grid'" class="pagination">
       <button 
         (click)="changePage(currentPage - 1)" 
         [disabled]="currentPage === 1"
@@ -170,4 +185,3 @@
     </div>
   </div>
 </div>
-
