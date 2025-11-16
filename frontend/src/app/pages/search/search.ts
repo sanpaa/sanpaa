@@ -6,6 +6,7 @@ import { PropertyCardComponent } from '../../components/property-card/property-c
 import { PropertyService } from '../../services/property';
 import { Property, PropertyFilters } from '../../models/property.model';
 import * as L from 'leaflet';
+import 'leaflet.markercluster';
 
 // Fix Leaflet's default icon path issue with webpack
 const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png';
@@ -60,7 +61,7 @@ export class SearchComponent implements OnInit, AfterViewInit {
   
   // Map
   private map: L.Map | null = null;
-  private markers: L.Marker[] = [];
+  private markerCluster: L.MarkerClusterGroup | null = null;
   
   constructor(private propertyService: PropertyService) {}
   
@@ -189,9 +190,10 @@ export class SearchComponent implements OnInit, AfterViewInit {
   private updateMapMarkers(): void {
     if (!this.map) return;
 
-    // Clear existing markers
-    this.markers.forEach(marker => marker.remove());
-    this.markers = [];
+    // Clear existing marker cluster
+    if (this.markerCluster) {
+      this.map.removeLayer(this.markerCluster);
+    }
 
     const validProperties = this.filteredProperties.filter(p => p.latitude && p.longitude);
 
@@ -202,6 +204,13 @@ export class SearchComponent implements OnInit, AfterViewInit {
 
     const bounds: L.LatLngTuple[] = [];
 
+    // Create marker cluster group exactly like the original
+    this.markerCluster = L.markerClusterGroup({
+      maxClusterRadius: 50,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false
+    });
+
     validProperties.forEach(property => {
       const lat = parseFloat(String(property.latitude));
       const lng = parseFloat(String(property.longitude));
@@ -210,17 +219,36 @@ export class SearchComponent implements OnInit, AfterViewInit {
 
       bounds.push([lat, lng]);
 
+      // Create custom icon for featured properties (gold star) exactly like original
+      const icon = property.featured ? 
+        L.divIcon({
+          html: '<div style="background: #FFD700; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="fas fa-star" style="color: white; font-size: 16px;"></i></div>',
+          className: '',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+          popupAnchor: [0, -15]
+        }) :
+        L.icon({
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+          shadowSize: [41, 41]
+        });
+
       const images = property.imageUrls || (property.imageUrl ? [property.imageUrl] : []);
       const firstImage = images.length > 0 ? images[0] : null;
       const location = property.city ? 
         `${property.neighborhood || ''}, ${property.city} - ${property.state}` : 
         (property.location || '');
 
-      const marker = L.marker([lat, lng]);
+      const marker = L.marker([lat, lng], { icon });
 
+      // Create popup content exactly like original
       const popupContent = `
-        <div style="min-width: 250px;">
-          ${firstImage ? `<img src="${firstImage}" alt="${property.title}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">` : ''}
+        <div class="map-popup" style="min-width: 250px;">
+          ${firstImage ? `<img src="${firstImage}" alt="${property.title}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;" onerror="this.style.display='none'">` : ''}
           <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #333;">${property.title}</h3>
           <div style="color: #666; font-size: 14px; margin-bottom: 10px;">
             <i class="fas fa-map-marker-alt" style="color: #004AAD;"></i> ${location}
@@ -234,17 +262,25 @@ export class SearchComponent implements OnInit, AfterViewInit {
           </div>
           <a href="https://wa.me/${property.contact.replace(/\D/g, '')}?text=Olá, tenho interesse no imóvel: ${encodeURIComponent(property.title)}" 
              class="btn btn-primary" target="_blank" 
-             style="display: inline-block; background: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-size: 14px; width: 100%; text-align: center;">
+             style="display: inline-block; background: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-size: 14px; width: 100%; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
             <i class="fab fa-whatsapp"></i> Tenho Interesse
           </a>
         </div>
       `;
 
-      marker.bindPopup(popupContent, { maxWidth: 300 });
-      marker.addTo(this.map!);
-      this.markers.push(marker);
+      marker.bindPopup(popupContent, {
+        maxWidth: 300,
+        className: 'custom-popup'
+      });
+
+      // Add marker to cluster group instead of directly to map
+      this.markerCluster!.addLayer(marker);
     });
 
+    // Add cluster group to map
+    this.map.addLayer(this.markerCluster);
+
+    // Fit map to show all markers
     if (bounds.length > 0) {
       this.map.fitBounds(bounds, { padding: [50, 50] });
     }
