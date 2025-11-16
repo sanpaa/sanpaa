@@ -1,1 +1,43 @@
-<p>search works!</p>
+<section class="search-hero">
+  <div class="container">
+    <h1>Encontre o Imóvel Ideal</h1>
+    <p style="text-align: center; opacity: 0.95;">Use os filtros abaixo para buscar o imóvel perfeito para você</p>
+  </div>
+</section>
+
+<div class="search-container">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Buscar Imóveis</h2>
+      <p class="section-subtitle">Em breve: Sistema avançado de busca com filtros e visualização em mapa</p>
+      <div class="divider"></div>
+    </div>
+    
+    <div style="text-align: center; padding: 3rem;">
+      <p>A página de busca está sendo migrada para Angular.</p>
+      <p>Por enquanto, confira todos os imóveis disponíveis na <a [routerLink]="['/']" fragment="imoveis">página inicial</a>.</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .search-hero {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: var(--white);
+    padding: 3rem 0 2rem;
+    margin-top: 80px;
+  }
+
+  .search-hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .search-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 20px;
+  }
+</style>
+
