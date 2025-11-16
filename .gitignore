@@ -4,3 +4,10 @@ uploads/
 *.log
 .env
 .DS_Store
+backup/
+frontend/dist/
+frontend/.angular/
+frontend/node_modules/
+.angular/
+dist/
+

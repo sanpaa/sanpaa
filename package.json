@@ -4,8 +4,12 @@
   "description": "Website profissional para corretora Alancarmo - Compra e Venda de Imóveis",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "ng": "cd frontend && ng serve",
+    "build": "cd frontend && ng build",
+    "build:prod": "cd frontend && ng build --configuration production",
+    "start": "npm run build:prod && node server.js",
     "dev": "node server.js",
+    "dev:angular": "cd frontend && ng serve --proxy-config proxy.conf.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -13,7 +17,8 @@
     "imoveis",
     "compra",
     "venda",
-    "real estate"
+    "real estate",
+    "angular"
   ],
   "author": "Alancarmo Corretor",
   "license": "ISC",
