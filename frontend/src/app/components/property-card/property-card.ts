@@ -1,10 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { Property } from '../../models/property.model';
 
 @Component({
   selector: 'app-property-card',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './property-card.html',
   styleUrl: './property-card.css',
 })

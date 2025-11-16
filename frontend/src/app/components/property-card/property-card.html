@@ -1,4 +1,4 @@
-<div class="property-card" [class.featured]="property.featured">
+<div class="property-card" [class.featured]="property.featured" [routerLink]="['/imovel', property.id]" style="cursor: pointer;">
   <div class="property-image">
     <img 
       *ngIf="getFirstImage()" 
@@ -39,7 +39,7 @@
       </span>
     </div>
     <p *ngIf="property.description" class="property-description">{{ property.description }}</p>
-    <div class="property-actions">
+    <div class="property-actions" (click)="$event.stopPropagation()">
       <a [href]="getWhatsAppLink()" class="btn btn-primary" target="_blank" style="flex: 1;">
         <i class="fab fa-whatsapp"></i> Tenho Interesse
       </a>
