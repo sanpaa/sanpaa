@@ -1,0 +1,55 @@
+<div class="login-container">
+  <div class="login-box">
+    <div class="login-header">
+      <i class="fas fa-lock fa-3x"></i>
+      <h1>Painel Administrativo</h1>
+      <p>Alancarmo Corretor</p>
+    </div>
+
+    <form (ngSubmit)="login()" class="login-form">
+      <div class="form-group">
+        <label for="username">
+          <i class="fas fa-user"></i> Usuário
+        </label>
+        <input
+          type="text"
+          id="username"
+          [(ngModel)]="username"
+          name="username"
+          placeholder="Digite seu usuário"
+          required
+          [disabled]="loading">
+      </div>
+
+      <div class="form-group">
+        <label for="password">
+          <i class="fas fa-key"></i> Senha
+        </label>
+        <input
+          type="password"
+          id="password"
+          [(ngModel)]="password"
+          name="password"
+          placeholder="Digite sua senha"
+          required
+          [disabled]="loading">
+      </div>
+
+      <div *ngIf="error" class="error-message">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ error }}
+      </div>
+
+      <button type="submit" class="btn-login" [disabled]="loading">
+        <i class="fas" [class.fa-spinner]="loading" [class.fa-spin]="loading" [class.fa-sign-in-alt]="!loading"></i>
+        {{ loading ? 'Entrando...' : 'Entrar' }}
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <a [routerLink]="['/']" class="back-link">
+        <i class="fas fa-arrow-left"></i> Voltar ao site
+      </a>
+    </div>
+  </div>
+</div>
