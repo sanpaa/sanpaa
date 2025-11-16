@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Imóvel - Alancarmo Corretor</title>
+    <meta name="description" content="Veja todos os detalhes deste imóvel - Alancarmo Corretor">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        .property-detail-container {
+            max-width: 1200px;
+            margin: 100px auto 60px;
+            padding: 0 20px;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #004AAD;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            gap: 12px;
+            color: #003580;
+        }
+
+        .property-detail-header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .property-detail-title {
+            font-size: 2rem;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+        }
+
+        .property-detail-price {
+            font-size: 2.5rem;
+            color: #004AAD;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .property-detail-location {
+            font-size: 1.1rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .property-badges {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .property-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .badge-featured {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #1a1a2e;
+        }
+
+        .badge-sold {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .property-gallery {
+            background: white;
+            padding: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .gallery-main-image {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .gallery-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            pointer-events: none;
+        }
+
+        .gallery-nav button {
+            pointer-events: all;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #004AAD;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .gallery-nav button:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .gallery-thumbnails {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            overflow-x: auto;
+            background: #f8f9fa;
+        }
+
+        .gallery-thumbnail {
+            min-width: 100px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .gallery-thumbnail.active,
+        .gallery-thumbnail:hover {
+            opacity: 1;
+            border-color: #004AAD;
+        }
+
+        .property-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .property-info-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .property-info-card h3 {
+            font-size: 1.3rem;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #004AAD;
+        }
+
+        .property-feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .property-feature:last-child {
+            border-bottom: none;
+        }
+
+        .property-feature i {
+            width: 24px;
+            color: #004AAD;
+            font-size: 1.2rem;
+        }
+
+        .property-feature-label {
+            font-weight: 500;
+            color: #666;
+            min-width: 100px;
+        }
+
+        .property-feature-value {
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+
+        .property-description {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .property-description h3 {
+            font-size: 1.5rem;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+        }
+
+        .property-description p {
+            line-height: 1.8;
+            color: #666;
+            font-size: 1.05rem;
+        }
+
+        .property-map {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .property-map h3 {
+            font-size: 1.5rem;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+        }
+
+        .property-map iframe {
+            width: 100%;
+            height: 400px;
+            border-radius: 8px;
+            border: none;
+        }
+
+        .property-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .property-actions .btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+        }
+
+        .btn-whatsapp {
+            background: linear-gradient(135deg, #25D366, #20BA5A);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-whatsapp:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+        }
+
+        .btn-maps {
+            background: linear-gradient(135deg, #004AAD, #003580);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-maps:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 74, 173, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .property-detail-title {
+                font-size: 1.5rem;
+            }
+
+            .property-detail-price {
+                font-size: 1.8rem;
+            }
+
+            .gallery-main-image {
+                height: 300px;
+            }
+
+            .property-actions {
+                flex-direction: column;
+            }
+
+            .property-actions .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <i class="fas fa-home"></i>
+                    Alancarmo Corretor
+                </a>
+                <nav class="nav" id="nav">
+                    <a href="/" class="nav-link">Início</a>
+                    <a href="/#servicos" class="nav-link">Serviços</a>
+                    <a href="/#imoveis" class="nav-link">Imóveis</a>
+                    <a href="/buscar.html" class="nav-link">Buscar</a>
+                    <a href="/#contato" class="nav-link">Contato</a>
+                </nav>
+                <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Property Detail Container -->
+    <div class="property-detail-container">
+        <a href="/#imoveis" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Voltar para Imóveis
+        </a>
+
+        <!-- Property Header -->
+        <div class="property-detail-header">
+            <h1 class="property-detail-title" id="propertyTitle">Carregando...</h1>
+            <div class="property-detail-price" id="propertyPrice">R$ --</div>
+            <div class="property-detail-location" id="propertyLocation">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Carregando localização...</span>
+            </div>
+            <div class="property-badges" id="propertyBadges"></div>
+        </div>
+
+        <!-- Image Gallery -->
+        <div class="property-gallery" id="propertyGallery">
+            <img src="" alt="Imóvel" class="gallery-main-image" id="mainImage">
+            <div class="gallery-nav">
+                <button onclick="previousImage()"><i class="fas fa-chevron-left"></i></button>
+                <button onclick="nextImage()"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="gallery-thumbnails" id="thumbnails"></div>
+        </div>
+
+        <!-- Property Details Grid -->
+        <div class="property-details-grid">
+            <!-- Property Features -->
+            <div class="property-info-card">
+                <h3>Características</h3>
+                <div class="property-feature">
+                    <i class="fas fa-tag"></i>
+                    <span class="property-feature-label">Tipo:</span>
+                    <span class="property-feature-value" id="propertyType">--</span>
+                </div>
+                <div class="property-feature">
+                    <i class="fas fa-bed"></i>
+                    <span class="property-feature-label">Quartos:</span>
+                    <span class="property-feature-value" id="propertyBedrooms">--</span>
+                </div>
+                <div class="property-feature">
+                    <i class="fas fa-bath"></i>
+                    <span class="property-feature-label">Banheiros:</span>
+                    <span class="property-feature-value" id="propertyBathrooms">--</span>
+                </div>
+                <div class="property-feature">
+                    <i class="fas fa-ruler-combined"></i>
+                    <span class="property-feature-label">Área:</span>
+                    <span class="property-feature-value" id="propertyArea">--</span>
+                </div>
+                <div class="property-feature">
+                    <i class="fas fa-car"></i>
+                    <span class="property-feature-label">Vagas:</span>
+                    <span class="property-feature-value" id="propertyParking">--</span>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="property-info-card">
+                <h3>Informações de Contato</h3>
+                <div class="property-feature">
+                    <i class="fas fa-phone"></i>
+                    <span class="property-feature-label">Contato:</span>
+                    <span class="property-feature-value" id="propertyContact">--</span>
+                </div>
+                <div class="property-actions">
+                    <a href="#" class="btn-whatsapp" id="whatsappBtn">
+                        <i class="fab fa-whatsapp"></i>
+                        Tenho Interesse
+                    </a>
+                    <a href="#" class="btn-maps" id="mapsBtn" target="_blank">
+                        <i class="fas fa-map-marked-alt"></i>
+                        Ver no Maps
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="property-description">
+            <h3>Descrição</h3>
+            <p id="propertyDescription">Carregando descrição...</p>
+        </div>
+
+        <!-- Map -->
+        <div class="property-map" id="propertyMapSection" style="display: none;">
+            <h3>Localização</h3>
+            <iframe id="propertyMapFrame" src="" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <!-- WhatsApp Float Button -->
+    <a href="https://wa.me/5511999999999" class="whatsapp-float" target="_blank" rel="noopener noreferrer">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Alancarmo Corretor</h3>
+                    <p>Especialistas em compra e venda de imóveis</p>
+                    <div class="footer-badge">
+                        <i class="fas fa-certificate"></i>
+                        CRECI 123456-F
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="/">Início</a></li>
+                        <li><a href="/#servicos">Serviços</a></li>
+                        <li><a href="/#imoveis">Imóveis</a></li>
+                        <li><a href="/buscar.html">Buscar</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Serviços</h4>
+                    <ul>
+                        <li>Compra de Imóveis</li>
+                        <li>Venda de Imóveis</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contato</h4>
+                    <p><i class="fas fa-phone"></i> (11) 99999-9999</p>
+                    <p><i class="fas fa-envelope"></i> contato@alancarmocorretor.com.br</p>
+                    <div class="social-links">
+                        <a href="#" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                        <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" title="Facebook"><i class="fab fa-facebook"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Alancarmo Corretor. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Scripts -->
+    <script src="imovel.js"></script>
+</body>
+</html>
