@@ -5,9 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { PropertyCardComponent } from '../../components/property-card/property-card';
 import { PropertyService } from '../../services/property';
 import { Property, PropertyFilters } from '../../models/property.model';
-import * as L from 'leaflet';
 
-// Declare global L to access markerClusterGroup loaded from CDN
+// Declare global L to access Leaflet and markerClusterGroup loaded from CDN
 declare const L: any;
 
 // Fix Leaflet's default icon path issue with webpack
