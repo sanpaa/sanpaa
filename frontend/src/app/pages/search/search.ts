@@ -6,23 +6,16 @@ import { PropertyCardComponent } from '../../components/property-card/property-c
 import { PropertyService } from '../../services/property';
 import { Property, PropertyFilters } from '../../models/property.model';
 import * as L from 'leaflet';
-import 'leaflet.markercluster';
+
+// Declare global L to access markerClusterGroup loaded from CDN
+declare const L: any;
 
 // Fix Leaflet's default icon path issue with webpack
 const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png';
 const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
 const shadowUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
-const iconDefault = L.icon({
-  iconRetinaUrl,
-  iconUrl,
-  shadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [16, -28],
-  shadowSize: [41, 41]
-});
-L.Marker.prototype.options.icon = iconDefault;
+
+// We'll configure the icon after ensuring L is loaded
 
 @Component({
   selector: 'app-search',
@@ -60,8 +53,8 @@ export class SearchComponent implements OnInit, AfterViewInit {
   availableCities: string[] = [];
   
   // Map
-  private map: L.Map | null = null;
-  private markerCluster: L.MarkerClusterGroup | null = null;
+  private map: any = null;
+  private markerCluster: any = null;
   
   constructor(private propertyService: PropertyService) {}
   
@@ -184,6 +177,21 @@ export class SearchComponent implements OnInit, AfterViewInit {
 
     console.log('Initializing map...');
     
+    // Configure default Leaflet icon (must be done after L is loaded from CDN)
+    if (typeof L !== 'undefined' && L.Icon && L.Icon.Default) {
+      const iconDefault = L.icon({
+        iconRetinaUrl: iconRetinaUrl,
+        iconUrl: iconUrl,
+        shadowUrl: shadowUrl,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        tooltipAnchor: [16, -28],
+        shadowSize: [41, 41]
+      });
+      L.Marker.prototype.options.icon = iconDefault;
+    }
+    
     // Default center (São Paulo)
     this.map = L.map('map').setView([-23.550520, -46.633308], 12);
 
@@ -218,6 +226,12 @@ export class SearchComponent implements OnInit, AfterViewInit {
     }
 
     const bounds: L.LatLngTuple[] = [];
+
+    // Check if markerClusterGroup is available from CDN
+    if (typeof L === 'undefined' || typeof L.markerClusterGroup !== 'function') {
+      console.error('L.markerClusterGroup is not available! Make sure leaflet.markercluster.js is loaded from CDN.');
+      return;
+    }
 
     // Create marker cluster group exactly like the original
     this.markerCluster = L.markerClusterGroup({
