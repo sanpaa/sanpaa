@@ -1,0 +1,56 @@
+<div class="property-card" [class.featured]="property.featured" [routerLink]="['/imovel', property.id]" style="cursor: pointer;">
+  <div class="property-image">
+    <img 
+      *ngIf="getFirstImage()" 
+      [src]="getFirstImage()" 
+      [alt]="property.title" 
+      loading="lazy"
+      (error)="onImageError($event)">
+    <i *ngIf="!getFirstImage()" class="fas fa-image fa-3x"></i>
+    <span *ngIf="property.featured" class="property-badge featured">
+      <i class="fas fa-star"></i> Destaque
+    </span>
+    <span *ngIf="getImagesCount() > 1" class="property-badge images">
+      <i class="fas fa-images"></i> {{ getImagesCount() }} fotos
+    </span>
+  </div>
+  <div class="property-content">
+    <span class="property-type">{{ property.type || 'Imóvel' }}</span>
+    <h3 class="property-title">{{ property.title }}</h3>
+    <div class="property-location">
+      <i class="fas fa-map-marker-alt"></i>
+      {{ getLocation() }}
+    </div>
+    <div class="property-price">
+      R$ {{ formatPrice(property.price) }}
+    </div>
+    <div *ngIf="hasDetails()" class="property-details">
+      <span *ngIf="property.bedrooms" class="property-detail">
+        <i class="fas fa-bed"></i> {{ property.bedrooms }} quartos
+      </span>
+      <span *ngIf="property.bathrooms" class="property-detail">
+        <i class="fas fa-bath"></i> {{ property.bathrooms }} banheiros
+      </span>
+      <span *ngIf="property.area" class="property-detail">
+        <i class="fas fa-ruler-combined"></i> {{ property.area }}m²
+      </span>
+      <span *ngIf="property.parking" class="property-detail">
+        <i class="fas fa-car"></i> {{ property.parking }} vagas
+      </span>
+    </div>
+    <p *ngIf="property.description" class="property-description">{{ property.description }}</p>
+    <div class="property-actions" (click)="$event.stopPropagation()">
+      <a [href]="getWhatsAppLink()" class="btn btn-primary" target="_blank" style="flex: 1;">
+        <i class="fab fa-whatsapp"></i> Tenho Interesse
+      </a>
+      <a *ngIf="property.latitude && property.longitude" 
+         [href]="getMapsLink()" 
+         class="btn btn-secondary" 
+         target="_blank" 
+         title="Ver no Google Maps">
+        <i class="fas fa-map-marked-alt"></i> Ver no Maps
+      </a>
+    </div>
+  </div>
+</div>
+

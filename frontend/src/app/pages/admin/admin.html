@@ -1,0 +1,267 @@
+<!-- Admin Header -->
+<div class="admin-header">
+  <div class="admin-container">
+    <div class="admin-header-content">
+      <div>
+        <h1><i class="fas fa-building"></i> Painel Administrativo</h1>
+        <p>Gerenciamento de Imóveis - Alancarmo Corretor</p>
+      </div>
+      <button class="btn btn-danger" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i> Sair
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Main Container -->
+<div class="admin-container">
+  <!-- Stats Section -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="fas fa-building"></i>
+      </div>
+      <div class="stat-value">{{ stats.total }}</div>
+      <div class="stat-label">Total de Imóveis</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-value">{{ stats.available }}</div>
+      <div class="stat-label">Disponíveis</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange">
+        <i class="fas fa-star"></i>
+      </div>
+      <div class="stat-value">{{ stats.featured }}</div>
+      <div class="stat-label">Em Destaque</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red">
+        <i class="fas fa-handshake"></i>
+      </div>
+      <div class="stat-value">{{ stats.sold }}</div>
+      <div class="stat-label">Vendidos</div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn btn-success" (click)="newProperty()" *ngIf="!showForm">
+      <i class="fas fa-plus"></i> Novo Imóvel
+    </button>
+  </div>
+
+  <!-- Property Form -->
+  <div *ngIf="showForm" class="form-section">
+    <h2>
+      <i class="fas fa-edit"></i> 
+      {{ editingId ? 'Editar Imóvel' : 'Novo Imóvel' }}
+    </h2>
+
+    <form (ngSubmit)="saveProperty()" class="property-form">
+      <div class="form-grid">
+        <!-- Title - Full width -->
+        <div class="form-group full-width">
+          <label for="title">Título *</label>
+          <input type="text" id="title" [(ngModel)]="formData.title" name="title" required>
+        </div>
+
+        <!-- Description - Full width -->
+        <div class="form-group full-width">
+          <label for="description">Descrição</label>
+          <textarea id="description" [(ngModel)]="formData.description" name="description" rows="4"></textarea>
+        </div>
+
+        <!-- Price -->
+        <div class="form-group">
+          <label for="price">Preço (R$) *</label>
+          <input type="number" id="price" [(ngModel)]="formData.price" name="price" required step="0.01">
+        </div>
+
+        <!-- CEP - right after price for auto-fill -->
+        <div class="form-group">
+          <label for="zipCode">CEP (para auto-preencher)</label>
+          <input type="text" id="zipCode" [(ngModel)]="formData.zipCode" name="zipCode" (blur)="lookupCEP()" placeholder="00000-000">
+        </div>
+
+        <!-- Type -->
+        <div class="form-group">
+          <label for="type">Tipo *</label>
+          <select id="type" [(ngModel)]="formData.type" name="type" required>
+            <option value="">Selecione</option>
+            <option value="Casa">Casa</option>
+            <option value="Apartamento">Apartamento</option>
+            <option value="Terreno">Terreno</option>
+            <option value="Comercial">Comercial</option>
+            <option value="Rural">Rural</option>
+          </select>
+        </div>
+
+        <!-- Street -->
+        <div class="form-group">
+          <label for="street">Rua</label>
+          <input type="text" id="street" [(ngModel)]="formData.street" name="street">
+        </div>
+
+        <!-- Neighborhood -->
+        <div class="form-group">
+          <label for="neighborhood">Bairro</label>
+          <input type="text" id="neighborhood" [(ngModel)]="formData.neighborhood" name="neighborhood">
+        </div>
+
+        <!-- City -->
+        <div class="form-group">
+          <label for="city">Cidade</label>
+          <input type="text" id="city" [(ngModel)]="formData.city" name="city">
+        </div>
+
+        <!-- State -->
+        <div class="form-group">
+          <label for="state">Estado</label>
+          <input type="text" id="state" [(ngModel)]="formData.state" name="state" maxlength="2">
+        </div>
+
+        <!-- Bedrooms -->
+        <div class="form-group">
+          <label for="bedrooms">Quartos</label>
+          <input type="number" id="bedrooms" [(ngModel)]="formData.bedrooms" name="bedrooms" min="0">
+        </div>
+
+        <!-- Bathrooms -->
+        <div class="form-group">
+          <label for="bathrooms">Banheiros</label>
+          <input type="number" id="bathrooms" [(ngModel)]="formData.bathrooms" name="bathrooms" min="0">
+        </div>
+
+        <!-- Area -->
+        <div class="form-group">
+          <label for="area">Área (m²)</label>
+          <input type="number" id="area" [(ngModel)]="formData.area" name="area" step="0.01">
+        </div>
+
+        <!-- Parking -->
+        <div class="form-group">
+          <label for="parking">Vagas de Garagem</label>
+          <input type="number" id="parking" [(ngModel)]="formData.parking" name="parking" min="0">
+        </div>
+
+        <!-- Contact -->
+        <div class="form-group">
+          <label for="contact">Contato (WhatsApp) *</label>
+          <input type="text" id="contact" [(ngModel)]="formData.contact" name="contact" required placeholder="(11) 99999-9999">
+        </div>
+
+        <!-- Featured checkbox -->
+        <div class="form-group">
+          <label>
+            <input type="checkbox" [(ngModel)]="formData.featured" name="featured">
+            Imóvel em Destaque
+          </label>
+        </div>
+
+        <!-- Sold checkbox -->
+        <div class="form-group">
+          <label>
+            <input type="checkbox" [(ngModel)]="formData.sold" name="sold">
+            Imóvel Vendido
+          </label>
+        </div>
+
+        <!-- Images - Full width -->
+        <div class="form-group full-width">
+          <label for="images">Imagens</label>
+          <input type="file" id="images" (change)="onFileSelected($event)" multiple accept="image/*">
+          <div *ngIf="formData.imageUrls && formData.imageUrls.length > 0" class="image-preview">
+            <div *ngFor="let url of formData.imageUrls; let i = index" class="preview-item">
+              <img [src]="url" alt="Preview">
+              <button type="button" class="btn-remove" (click)="removeImage(i)">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-ai" (click)="getAiSuggestions()" [disabled]="aiLoading">
+          <i class="fas" [class.fa-robot]="!aiLoading" [class.fa-spinner]="aiLoading" [class.fa-spin]="aiLoading"></i>
+          {{ aiLoading ? 'Gerando...' : 'IA - Sugestões' }}
+        </button>
+        <button type="submit" class="btn btn-success" [disabled]="uploadingImages">
+          <i class="fas fa-save"></i> Salvar
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Properties List -->
+  <div class="properties-section">
+    <h2><i class="fas fa-list"></i> Imóveis Cadastrados</h2>
+    
+    <div *ngIf="loading" class="text-center">
+      <i class="fas fa-spinner fa-spin fa-3x"></i>
+      <p>Carregando...</p>
+    </div>
+
+    <div *ngIf="!loading && properties.length === 0" class="text-center">
+      <i class="fas fa-inbox fa-3x"></i>
+      <p>Nenhum imóvel cadastrado</p>
+    </div>
+
+    <div *ngIf="!loading && properties.length > 0" class="table-responsive">
+      <table class="properties-table">
+        <thead>
+          <tr>
+            <th>Imagem</th>
+            <th>Título</th>
+            <th>Tipo</th>
+            <th>Preço</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let property of properties">
+            <td>
+              <img 
+                *ngIf="property.imageUrls && property.imageUrls.length > 0" 
+                [src]="property.imageUrls[0]" 
+                alt="Imagem"
+                class="table-img">
+              <i *ngIf="!property.imageUrls || property.imageUrls.length === 0" class="fas fa-image"></i>
+            </td>
+            <td>
+              {{ property.title }}
+              <span *ngIf="property.featured" class="badge badge-star">
+                <i class="fas fa-star"></i> Destaque
+              </span>
+            </td>
+            <td>{{ property.type }}</td>
+            <td>R$ {{ formatPrice(property.price) }}</td>
+            <td>
+              <span class="badge" [class.badge-success]="!property.sold" [class.badge-danger]="property.sold">
+                {{ property.sold ? 'Vendido' : 'Disponível' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn btn-sm btn-primary" (click)="editProperty(property)">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="deleteProperty(property.id)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

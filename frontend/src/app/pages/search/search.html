@@ -1,0 +1,187 @@
+<!-- Search Hero -->
+<section class="search-hero">
+  <div class="container">
+    <h1>Encontre o Imóvel Ideal</h1>
+    <p style="text-align: center; opacity: 0.95;">Use os filtros abaixo para buscar o imóvel perfeito para você</p>
+  </div>
+</section>
+
+<!-- Search Container -->
+<div class="search-container">
+  <div class="container">
+    <!-- Filters -->
+    <div class="filters-section">
+      <h2 style="margin-bottom: 1.5rem; color: var(--dark-gray);">
+        <i class="fas fa-filter"></i> Filtros de Busca
+      </h2>
+      
+      <div class="filters-row">
+        <div class="filter-group">
+          <label for="searchText">Busca Livre</label>
+          <input 
+            type="text" 
+            id="searchText" 
+            [(ngModel)]="filters.searchText" 
+            (input)="applyFilters()"
+            placeholder="Digite título, descrição ou localização...">
+        </div>
+        
+        <div class="filter-group">
+          <label for="filterType">Tipo de Imóvel</label>
+          <select id="filterType" [(ngModel)]="filters.type" (change)="applyFilters()">
+            <option value="">Todos os tipos</option>
+            <option value="Casa">Casa</option>
+            <option value="Apartamento">Apartamento</option>
+            <option value="Terreno">Terreno</option>
+            <option value="Comercial">Comercial</option>
+            <option value="Rural">Rural</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label for="filterCity">Cidade</label>
+          <select id="filterCity" [(ngModel)]="filters.city" (change)="applyFilters()">
+            <option value="">Todas as cidades</option>
+            <option *ngFor="let city of availableCities" [value]="city">{{ city }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filterBedrooms">Quartos</label>
+          <select id="filterBedrooms" [(ngModel)]="filters.bedrooms" (change)="applyFilters()">
+            <option [value]="undefined">Qualquer</option>
+            <option [value]="1">1+</option>
+            <option [value]="2">2+</option>
+            <option [value]="3">3+</option>
+            <option [value]="4">4+</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filters-row">
+        <div class="filter-group">
+          <label for="filterPriceMin">Preço Mínimo (R$)</label>
+          <input 
+            type="number" 
+            id="filterPriceMin" 
+            [(ngModel)]="filters.priceMin" 
+            (input)="applyFilters()"
+            placeholder="0" 
+            step="10000">
+        </div>
+        
+        <div class="filter-group">
+          <label for="filterPriceMax">Preço Máximo (R$)</label>
+          <input 
+            type="number" 
+            id="filterPriceMax" 
+            [(ngModel)]="filters.priceMax" 
+            (input)="applyFilters()"
+            placeholder="Sem limite" 
+            step="10000">
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-primary" (click)="applyFilters()">
+          <i class="fas fa-search"></i> Buscar
+        </button>
+        <button class="btn btn-secondary" (click)="clearFilters()">
+          <i class="fas fa-times"></i> Limpar Filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Header -->
+    <div class="results-header">
+      <div class="results-count">{{ resultsCount }}</div>
+      <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <div class="view-toggle">
+          <button 
+            [class.active]="currentView === 'grid'" 
+            (click)="switchView('grid')">
+            <i class="fas fa-th"></i> Grade
+          </button>
+          <button 
+            [class.active]="currentView === 'map'" 
+            (click)="switchView('map')">
+            <i class="fas fa-map"></i> Mapa
+          </button>
+        </div>
+        <select class="sort-select" [(ngModel)]="sortBy" (change)="sortProperties()">
+          <option value="featured">Destaques primeiro</option>
+          <option value="price-asc">Menor preço</option>
+          <option value="price-desc">Maior preço</option>
+          <option value="newest">Mais recentes</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Map View -->
+    <div id="map" *ngIf="currentView === 'map'" class="map-view"></div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading && currentView === 'grid'" class="properties-grid">
+      <div *ngFor="let i of [1,2,3,4,5,6]" class="skeleton-card">
+        <div class="skeleton skeleton-image"></div>
+        <div class="skeleton-content">
+          <div class="skeleton skeleton-line short"></div>
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line short"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Grid -->
+    <div *ngIf="!loading && !error && displayedProperties.length > 0 && currentView === 'grid'" class="properties-grid">
+      <app-property-card *ngFor="let property of displayedProperties" [property]="property"></app-property-card>
+    </div>
+
+    <!-- No Results -->
+    <div *ngIf="!loading && !error && displayedProperties.length === 0 && currentView === 'grid'" class="no-results">
+      <i class="fas fa-search"></i>
+      <h3>Nenhum imóvel encontrado</h3>
+      <p>Tente ajustar os filtros ou entre em contato para mais opções</p>
+      <a href="https://wa.me/5511999999999?text=Olá, estou procurando um imóvel" class="btn btn-primary" target="_blank">
+        <i class="fab fa-whatsapp"></i> Falar com Corretor
+      </a>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && currentView === 'grid'" class="no-results">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h3>Erro ao carregar imóveis</h3>
+      <p>Por favor, tente novamente mais tarde ou entre em contato</p>
+      <button class="btn btn-primary" (click)="loadProperties()">
+        <i class="fas fa-redo"></i> Tentar Novamente
+      </button>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!loading && !error && totalPages > 1 && currentView === 'grid'" class="pagination">
+      <button 
+        (click)="changePage(currentPage - 1)" 
+        [disabled]="currentPage === 1"
+        class="btn-pagination">
+        <i class="fas fa-chevron-left"></i> Anterior
+      </button>
+
+      <button 
+        *ngFor="let page of paginationPages" 
+        (click)="page > 0 ? changePage(page) : null"
+        [class.active]="page === currentPage"
+        [disabled]="page === -1"
+        class="btn-pagination">
+        {{ page > 0 ? page : '...' }}
+      </button>
+
+      <button 
+        (click)="changePage(currentPage + 1)" 
+        [disabled]="currentPage === totalPages"
+        class="btn-pagination">
+        Próxima <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>

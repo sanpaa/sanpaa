@@ -1,0 +1,148 @@
+<div class="property-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center" style="padding: 4rem;">
+    <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--primary-color);"></i>
+    <p style="margin-top: 1rem;">Carregando detalhes...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="text-center" style="padding: 4rem;">
+    <i class="fas fa-exclamation-triangle fa-3x" style="color: #DC3545;"></i>
+    <h2 style="margin-top: 1rem;">Imóvel não encontrado</h2>
+    <p>O imóvel que você procura não está disponível.</p>
+    <a [routerLink]="['/']" class="btn btn-primary">
+      <i class="fas fa-home"></i> Voltar para Home
+    </a>
+  </div>
+
+  <!-- Property Content -->
+  <div *ngIf="property && !loading">
+    <!-- Back Button -->
+    <a [routerLink]="['/']" class="back-button">
+      <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+
+    <!-- Property Header -->
+    <div class="property-detail-header">
+      <h1 class="property-detail-title">{{ property.title }}</h1>
+      <div class="property-detail-price">R$ {{ formatPrice(property.price) }}</div>
+      <div class="property-detail-location">
+        <i class="fas fa-map-marker-alt"></i>
+        {{ getLocation() }}
+      </div>
+      <div class="property-badges">
+        <span *ngIf="property.featured" class="property-badge badge-featured">
+          <i class="fas fa-star"></i> Destaque
+        </span>
+        <span *ngIf="property.sold" class="property-badge badge-sold">
+          <i class="fas fa-check-circle"></i> Vendido
+        </span>
+        <span *ngIf="!property.sold" class="property-badge badge-available">
+          <i class="fas fa-check"></i> Disponível
+        </span>
+      </div>
+    </div>
+
+    <!-- Image Gallery -->
+    <div *ngIf="images.length > 0" class="property-gallery">
+      <div class="gallery-main">
+        <img [src]="currentImage" [alt]="property.title">
+        <button *ngIf="images.length > 1" class="gallery-btn gallery-prev" (click)="prevImage()">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button *ngIf="images.length > 1" class="gallery-btn gallery-next" (click)="nextImage()">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+      <div *ngIf="images.length > 1" class="gallery-thumbnails">
+        <img 
+          *ngFor="let image of images; let i = index" 
+          [src]="image" 
+          [class.active]="i === currentImageIndex"
+          (click)="selectImage(i)"
+          [alt]="'Foto ' + (i + 1)">
+      </div>
+    </div>
+
+    <!-- Property Grid -->
+    <div class="property-grid">
+      <!-- Main Info -->
+      <div class="property-main-info">
+        <h2><i class="fas fa-info-circle"></i> Descrição</h2>
+        <p *ngIf="property.description">{{ property.description }}</p>
+        <p *ngIf="!property.description" style="color: #999;">Sem descrição disponível.</p>
+
+        <h2 style="margin-top: 2rem;"><i class="fas fa-home"></i> Características</h2>
+        <div class="characteristics-grid">
+          <div *ngIf="property.type" class="characteristic-item">
+            <i class="fas fa-building"></i>
+            <div>
+              <strong>Tipo</strong>
+              <p>{{ property.type }}</p>
+            </div>
+          </div>
+          <div *ngIf="property.bedrooms" class="characteristic-item">
+            <i class="fas fa-bed"></i>
+            <div>
+              <strong>Quartos</strong>
+              <p>{{ property.bedrooms }}</p>
+            </div>
+          </div>
+          <div *ngIf="property.bathrooms" class="characteristic-item">
+            <i class="fas fa-bath"></i>
+            <div>
+              <strong>Banheiros</strong>
+              <p>{{ property.bathrooms }}</p>
+            </div>
+          </div>
+          <div *ngIf="property.area" class="characteristic-item">
+            <i class="fas fa-ruler-combined"></i>
+            <div>
+              <strong>Área</strong>
+              <p>{{ property.area }}m²</p>
+            </div>
+          </div>
+          <div *ngIf="property.parking" class="characteristic-item">
+            <i class="fas fa-car"></i>
+            <div>
+              <strong>Vagas</strong>
+              <p>{{ property.parking }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Map Section -->
+        <div *ngIf="property.latitude && property.longitude" style="margin-top: 2rem;">
+          <h2><i class="fas fa-map-marker-alt"></i> Localização</h2>
+          <div id="property-map" class="property-map"></div>
+          <a [href]="getMapsLink()" target="_blank" class="btn btn-secondary" style="margin-top: 1rem; display: inline-block;">
+            <i class="fas fa-map-marked-alt"></i> Abrir no Google Maps
+          </a>
+        </div>
+      </div>
+
+      <!-- Contact Sidebar -->
+      <div class="property-sidebar">
+        <div class="contact-card">
+          <h3><i class="fas fa-phone"></i> Entre em Contato</h3>
+          <p>Interessado neste imóvel? Fale conosco agora!</p>
+          <a [href]="getWhatsAppLink()" target="_blank" class="btn btn-success btn-block">
+            <i class="fab fa-whatsapp"></i> WhatsApp
+          </a>
+          <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
+            <i class="fas fa-shield-alt"></i> Atendimento rápido e seguro
+          </p>
+        </div>
+
+        <div class="share-card">
+          <h3><i class="fas fa-share-alt"></i> Compartilhar</h3>
+          <div class="share-buttons">
+            <a [href]="getWhatsAppLink()" target="_blank" class="share-btn whatsapp" title="Compartilhar no WhatsApp">
+              <i class="fab fa-whatsapp"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

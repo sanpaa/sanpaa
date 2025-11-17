@@ -74,33 +74,19 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use('/api/', apiLimiter);
 
-// Serve only specific static files to avoid exposing server files
-const allowedFiles = {
-    'index.html': 'text/html',
-    'buscar.html': 'text/html',
-    'styles.css': 'text/css',
-    'script.js': 'application/javascript',
-    'buscar.js': 'application/javascript'
-};
-
-// Custom static file serving for main site
-app.get('/:file', staticLimiter, (req, res, next) => {
-    const fileName = req.params.file;
-    if (allowedFiles[fileName]) {
-        const filePath = path.join(__dirname, fileName);
-        res.setHeader('Content-Type', allowedFiles[fileName]);
-        res.sendFile(filePath, (err) => {
-            if (err) {
-                next();
-            }
-        });
-    } else {
-        next();
+// Serve Angular app static files
+app.use(express.static(path.join(__dirname, 'frontend/dist/frontend/browser'), {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        } else if (filePath.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        }
     }
-});
+}));
 
 // Serve admin panel with restricted access
-app.use('/admin', express.static(path.join(__dirname, 'admin'), {
+app.use('/admin-legacy', express.static(path.join(__dirname, 'admin'), {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript');
@@ -482,9 +468,9 @@ app.delete('/api/properties/:id', async (req, res) => {
     }
 });
 
-// Serve main website
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// Serve Angular app for all other routes (SPA routing)
+app.use((req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/dist/frontend/browser/index.html'));
 });
 
 // Start server
@@ -492,7 +478,8 @@ async function startServer() {
     await initializeData();
     app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
-        console.log(`Admin panel: http://localhost:${PORT}/admin`);
+        console.log(`Angular app: http://localhost:${PORT}`);
+        console.log(`Legacy admin panel: http://localhost:${PORT}/admin-legacy`);
     });
 }
 
