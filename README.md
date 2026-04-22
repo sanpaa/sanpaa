@@ -1,21 +1,34 @@
+<h1>👋 Olá, eu sou o Paulo!</h1>
 
-<h1>Olá, sou o Paulo!</h1>
+<p>
+💻 Full Stack Developer | .NET | Angular | Automação de Sistemas <br/>
+🚀 APIs • Integrações • Backend • RPA
+</p>
 
+---
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.14.0/devicon.min.css">
+## 🛠️ Tecnologias e Ferramentas
 
-<div align="left">
-  <img height="180em" src="https://github-readme-stats.vercel.app/api?username=sanpaa&show_icons=true&theme=great-gatsby&include_all_commits=true&count_private=true">
-</div>
-<br><br>
+![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
+![.NET](https://img.shields.io/badge/.NET-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+![Angular](https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 
-<div style="display: inline_block"><br>
-Conhecimentos em Python;
-  <img align="left" alt="P.PY" height="30" width="30" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg"> <br><br>
-Conhecimentos em HTML;
-  <img align="left" alt="P.HTML" height="30" width="30" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg"> <br><br>
-Conhecimentos em CSS;
-  <img align="left" alt="P.CSS" height="30" width="30" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg"> <br><br>
- 
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![SQL](https://img.shields.io/badge/SQL-4479A1?style=for-the-badge&logo=postgresql&logoColor=white)
 
-  ![Snake animation](https://github.com/sanpaa/Elcezada/blob/output/github-contribution-grid-snake.svg)
+---
+
+## 📊 Minhas Estatísticas
+<p align="left">
+  <img height="180em" height="380px" src="https://github-readme-stats.vercel.app/api/top-langs/?username=sanpaa&layout=compact&theme=tokyonight"/>
+</p>
+
+---
+
+## 📫 Vamos nos conectar?
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/paulo-dev-dotnet/)
