@@ -24,7 +24,7 @@
 
 ## 📊 Minhas Estatísticas
 <p align="left">
-  <img height="180em" height="380px" src="https://github-readme-stats.vercel.app/api/top-langs/?username=sanpaa&layout=compact&theme=tokyonight"/>
+  <img height="180em" height="380px" src="[https://github-stats-extended.vercel.app/api/top-langs/?username=sanpaa&layout=compact&theme=tokyonight"/>
 </p>
 
 ---
